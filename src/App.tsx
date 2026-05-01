@@ -167,7 +167,7 @@ export default function App() {
                   <AnimatePresence mode="wait">
                     {tab === 'home' && (
                       <motion.div key="home" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="h-full">
-                        <Lobby user={user!} settings={settings} setView={setView} onLogout={handleLogout} onUpdate={onUserUpdate} />
+                        <Lobby user={user!} settings={settings} words={words} setView={setView} onLogout={handleLogout} onUpdate={onUserUpdate} />
                       </motion.div>
                     )}
                     {tab === 'hall' && (

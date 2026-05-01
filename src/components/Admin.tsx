@@ -28,6 +28,8 @@ export default function Admin({ settings, setSettings, words, setWords, batches,
   const [auth, setAuth] = useState(false);
   const [pw, setPw] = useState("");
 
+  const [saving, setSaving] = useState(false);
+
   const handleCSV = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -186,24 +188,37 @@ export default function Admin({ settings, setSettings, words, setWords, batches,
 
       <div className="pt-4 pb-12">
         <button 
-          onClick={() => {
-            setDoc(doc(db, 'global', 'config'), { 
-              words, 
-              batches, 
-              settings 
-            }, { merge: true });
-            
-            if (curUser) {
-              const updatedSelf = users.find(u => u.id === curUser.id);
-              if (updatedSelf) setCurUser(updatedSelf!);
+          disabled={saving}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await setDoc(doc(db, 'global', 'config'), { 
+                words, 
+                batches, 
+                settings 
+              }, { merge: true });
+              
+              if (curUser) {
+                const updatedSelf = users.find(u => u.id === curUser.id);
+                if (updatedSelf) setCurUser(updatedSelf!);
+              }
+              alert("主宰法旨已封存！(存檔成功)");
+              setView('lobby');
+            } catch (err: any) {
+              console.error(err);
+              alert("封存失敗：權限不足。請確認 Firestore Rules 設定是否正確。");
+            } finally {
+              setSaving(false);
             }
-            alert("主宰法旨已封存！");
-            setView('lobby');
           }}
-          className="w-full py-5 btn-gold text-2xl flex items-center justify-center space-x-3"
+          className="w-full py-5 btn-gold text-2xl flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Save size={24} />
-          <span className="tracking-tighter">存檔・SAVE_CONFIG</span>
+          {saving ? (
+            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <Save size={24} />
+          )}
+          <span className="tracking-tighter">{saving ? '封存中...' : '存檔・SAVE_CONFIG'}</span>
         </button>
       </div>
     </div>

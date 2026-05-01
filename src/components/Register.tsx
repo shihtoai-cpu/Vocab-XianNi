@@ -28,7 +28,14 @@ export default function Register({ onBack, onDone }: RegisterProps) {
 
   useEffect(() => {
     if (auth.currentUser) {
-      setN(auth.currentUser.displayName || "");
+      // If it's a nickname-only auth (ends with @xianni.auth)
+      const email = auth.currentUser.email || "";
+      if (email.endsWith("@xianni.auth")) {
+        setN(email.split("@")[0]);
+      } else {
+        setN(auth.currentUser.displayName || "");
+      }
+      
       if (auth.currentUser.photoURL) setA(auth.currentUser.photoURL);
     }
   }, []);
@@ -70,8 +77,9 @@ export default function Register({ onBack, onDone }: RegisterProps) {
             type="text" 
             value={n}
             onChange={(e) => setN(e.target.value)}
+            disabled={auth.currentUser?.email?.endsWith("@xianni.auth")}
             placeholder="輸入汝之修真稱號..."
-            className="w-full h-14 glass rounded-xl px-6 text-white font-bold border border-white/5 focus:border-indigo-500/50 outline-none transition-all placeholder:text-slate-700"
+            className={`w-full h-14 glass rounded-xl px-6 text-white font-bold border border-white/5 focus:border-indigo-500/50 outline-none transition-all placeholder:text-slate-700 ${auth.currentUser?.email?.endsWith("@xianni.auth") ? 'opacity-50 cursor-not-allowed bg-white/5' : ''}`}
           />
         </div>
 

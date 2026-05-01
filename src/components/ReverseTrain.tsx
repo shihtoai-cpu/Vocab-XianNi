@@ -40,7 +40,16 @@ export default function ReverseTrain({ words, user, onUpdate, setView }: Reverse
     }
   };
 
-  if (!shuffled || shuffled.length === 0) return <div className="p-10 text-white text-center">神識感應中...</div>;
+  if (!shuffled || shuffled.length === 0) return (
+    <div className="p-10 text-white text-center flex flex-col items-center justify-center h-screen space-y-4">
+      <p className="text-slate-500 italic">神識感應中...</p>
+      {(!words || words.length === 0) && (
+        <button onClick={() => setView('lobby')} className="px-6 py-3 glass rounded-xl text-indigo-400">
+          暫回洞府
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="h-screen flex flex-col bg-[#020617] overflow-hidden">

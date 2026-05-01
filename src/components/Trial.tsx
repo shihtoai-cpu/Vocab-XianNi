@@ -113,7 +113,16 @@ export default function Trial({ user, settings, words, onUpdate, setView }: Tria
     setView('lobby');
   };
 
-  if (!q[idx]) return <div className="p-10 text-center">正在感應試煉內容...</div>;
+  if (!q[idx]) return (
+    <div className="p-10 text-center flex flex-col items-center justify-center h-screen space-y-4">
+      <p className="text-slate-500 italic">正在感應試煉內容...</p>
+      {words.length === 0 && (
+        <button onClick={() => setView('lobby')} className="px-6 py-3 glass rounded-xl text-indigo-400">
+          暫回洞府
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="p-6 h-screen flex flex-col overflow-hidden bg-slate-950">

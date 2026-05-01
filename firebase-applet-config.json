@@ -1,10 +1,9 @@
 {
-  "projectId": "gen-lang-client-0586059940",
-  "appId": "1:78971403418:web:b3bb23616a901b27737323",
-  "apiKey": "AIzaSyDiZyBhzfg9MgT9g7Pw8ELzDS8zMSN4EK4",
-  "authDomain": "gen-lang-client-0586059940.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-75d1bc28-058b-4ff9-b854-66a6f4ec3c6e",
-  "storageBucket": "gen-lang-client-0586059940.firebasestorage.app",
-  "messagingSenderId": "78971403418",
-  "measurementId": ""
+  "projectId": "vocab-xianni",
+  "appId": "1:547644420167:web:68b525b42e06eff53a4162",
+  "apiKey": "AIzaSyCTG8Murtd5AYcTZlWZAzG5-2O-thT-FCw",
+  "authDomain": "vocab-xianni.firebaseapp.com",
+  "storageBucket": "vocab-xianni.firebasestorage.app",
+  "messagingSenderId": "547644420167",
+  "measurementId": "G-BWWSPT8054"
 }

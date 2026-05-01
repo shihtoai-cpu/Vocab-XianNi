@@ -12,12 +12,13 @@ import { ShieldCheck, Camera, Sword, RotateCcw, Zap, ChevronRight, LogOut, Spark
 interface LobbyProps {
   user: User;
   settings: AppSettings;
+  words: Word[];
   setView: (v: any) => void;
   onLogout: () => void;
   onUpdate: (u: User) => void;
 }
 
-export default function Lobby({ user, settings, setView, onLogout, onUpdate }: LobbyProps) {
+export default function Lobby({ user, settings, words, setView, onLogout, onUpdate }: LobbyProps) {
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
   const [tempAvatar, setTempAvatar] = useState(user.avatar);
   const [tempSize, setTempSize] = useState(user.avatarSize || 192);
@@ -343,6 +344,13 @@ export default function Lobby({ user, settings, setView, onLogout, onUpdate }: L
       </div>
 
       <div className="flex-1 space-y-4">
+        {words.length === 0 && (
+          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-center space-y-2">
+            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">仙冊空虛</p>
+            <p className="text-[10px] text-amber-500/70">主宰殿尚未封存經書，請前往主宰殿匯入單字庫。</p>
+          </div>
+        )}
+        
         {canRebirth && (
           <button 
             onClick={handleRebirth}
