@@ -1,0 +1,50 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Individual user progress and stats",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "avatarSize": { "type": "number" },
+        "avatarX": { "type": "number" },
+        "avatarY": { "type": "number" },
+        "exp": { "type": "number" },
+        "ancientExp": { "type": "number" },
+        "rotations": { "type": "number" },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "rounds": { "type": "number" },
+            "spirit": { "type": "number" },
+            "lastDate": { "type": "string" },
+            "wordHistory": { "type": "object" }
+          }
+        },
+        "uid": { "type": "string" }
+      },
+      "required": ["name", "exp", "stats"]
+    },
+    "GlobalConfig": {
+      "title": "App Configuration",
+      "description": "Global settings, words, and batches",
+      "type": "object",
+      "properties": {
+        "words": { "type": "array" },
+        "batches": { "type": "array" },
+        "settings": { "type": "object" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User documents stored by Auth UID"
+    },
+    "/global/config": {
+      "schema": "GlobalConfig",
+      "description": "Global application configuration"
+    }
+  }
+}

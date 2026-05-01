@@ -1,0 +1,21 @@
+{
+  "short_name": "天逆珠",
+  "name": "天逆珠：修仙單字試煉場",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=192",
+      "type": "image/jpeg",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=512",
+      "type": "image/jpeg",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#020617",
+  "display": "standalone",
+  "theme_color": "#6366f1",
+  "description": "天逆珠現，再造乾坤。專為道友打造的修仙單字試煉場。"
+}
