@@ -11,11 +11,14 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js')
+          const swPath = window.location.pathname.endsWith('/') 
+            ? 'sw.js' 
+            : './sw.js';
+          navigator.serviceWorker.register(swPath)
             .then(reg => console.log('天逆珠 Service Worker 註冊成功'))
             .catch(err => console.log('Service Worker 註冊失敗', err));
         });
