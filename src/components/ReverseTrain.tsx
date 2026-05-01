@@ -41,12 +41,16 @@ export default function ReverseTrain({ words, user, onUpdate, setView }: Reverse
   };
 
   if (!shuffled || shuffled.length === 0) return (
-    <div className="p-10 text-white text-center flex flex-col items-center justify-center h-screen space-y-4">
-      <p className="text-slate-500 italic">神識感應中...</p>
+    <div className="p-10 text-white text-center flex flex-col items-center justify-center h-screen space-y-4 bg-slate-950">
+      <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
+      <p className="text-slate-500 italic font-bold">神識感應陣法中...</p>
       {(!words || words.length === 0) && (
-        <button onClick={() => setView('lobby')} className="px-6 py-3 glass rounded-xl text-indigo-400">
-          暫回洞府
-        </button>
+        <div className="space-y-4 pt-4">
+          <p className="text-amber-500 text-xs">仙冊空虛，無經書可練</p>
+          <button onClick={() => setView('lobby')} className="px-8 py-3 glass rounded-xl text-indigo-400 font-bold uppercase tracking-widest border border-indigo-500/20 active:scale-95 transition-all">
+            暫歸洞府
+          </button>
+        </div>
       )}
     </div>
   );
@@ -60,7 +64,7 @@ export default function ReverseTrain({ words, user, onUpdate, setView }: Reverse
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-95 group border border-white/5 shadow-xl w-fit"
           >
             <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="text-[10px] font-black tracking-widest uppercase">儲存修為並遁走</span>
+            <span className="text-[10px] font-black tracking-widest uppercase">封印修為並遁走</span>
           </button>
           
           <div className="flex items-center space-x-6 pl-2">
@@ -68,7 +72,7 @@ export default function ReverseTrain({ words, user, onUpdate, setView }: Reverse
               onClick={prevWord}
               disabled={curIdx === 0}
               className={`p-2 transition-all rounded-lg border border-white/5 bg-white/5 ${curIdx === 0 ? 'opacity-20 cursor-not-allowed' : 'opacity-60 hover:opacity-100 hover:text-white text-indigo-400 active:scale-90'}`}
-              title="回溯前緣 (上一題)"
+              title="回溯前緣"
             >
               <RotateCcw size={16} />
             </button>
@@ -76,7 +80,7 @@ export default function ReverseTrain({ words, user, onUpdate, setView }: Reverse
               <span className="text-indigo-400 font-black text-[10px] tracking-[0.2em] uppercase">
                 逆練神識
               </span>
-              <span className="text-slate-600 font-mono text-[9px] tracking-tighter">進度：{curIdx + 1} / {shuffled.length}</span>
+              <span className="text-slate-600 font-mono text-[9px] tracking-tighter">圓滿度：{curIdx + 1} / {shuffled.length}</span>
             </div>
           </div>
         </div>

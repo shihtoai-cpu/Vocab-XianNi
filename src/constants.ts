@@ -34,7 +34,11 @@ export const ALL_SUB = REALMS_DEF.flatMap(r => r.s.map(s => ({ m: r.n, s, c: r.c
 export const getRealmInfo = (exp: number): RealmInfo => {
     let acc = 0;
     for (let i = 0; i < ALL_SUB.length; i++) {
-        const req = i < 15 ? 100 + i * 20 : Math.floor(250 * Math.pow(1.18, i - 14) + 40 * Math.pow(i, 2));
+        // Extremely difficult: Base 20,000 with 25% geometric growth.
+        // Level 1: 20,000
+        // Level 2: 25,000
+        // Difficulty rises rapidly to ensure real mastery takes time.
+        const req = Math.floor(20000 * Math.pow(1.25, i));
         if (exp < acc + req) return { ...ALL_SUB[i], idx: i, current: acc, next: acc + req };
         acc += req;
     }

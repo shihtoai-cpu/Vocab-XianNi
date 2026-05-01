@@ -92,21 +92,20 @@ export default function App() {
     return () => unsubUsers();
   }, [user]);
 
-  const persistGlobal = (w: Word[] | null, b: Batch[] | null, s: AppSettings | null) => {
-    if (w) setWords(w);
-    if (b) setBatches(b);
-    if (s) setSettings(s);
+  const persistGlobal = async (changes: { words?: Word[]; batches?: Batch[]; settings?: AppSettings }) => {
+    // Update local state immediately for snappy UI
+    if (changes.words) setWords([...changes.words]);
+    if (changes.batches) setBatches([...changes.batches]);
+    if (changes.settings) setSettings({...changes.settings});
 
-    if (w || b || s) {
-      setDoc(doc(db, 'global', 'config'), {
-        words: w || words,
-        batches: b || batches,
-        settings: s || settings
-      }, { merge: true }).catch(err => {
-        import('./lib/firebase').then(({ handleFirestoreError, OperationType }) => {
-          handleFirestoreError(err, OperationType.WRITE, 'global/config');
-        });
-      });
+    // Sync to Firestore
+    try {
+      const configRef = doc(db, 'global', 'config');
+      await setDoc(configRef, changes, { merge: true });
+    } catch (err) {
+      console.error("Failed to persist global decree:", err);
+      const { handleFirestoreError, OperationType } = await import('./lib/firebase');
+      handleFirestoreError(err, OperationType.WRITE, 'global/config');
     }
   };
 
@@ -143,7 +142,7 @@ export default function App() {
           <AnimatePresence mode="wait">
             {view === 'gate' && (
               <motion.div key="gate" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
-                <Gate users={users} setView={setView} setUser={setUser} />
+                <Gate setView={setView} setUser={setUser} />
               </motion.div>
             )}
             {view === 'reg' && (
@@ -177,7 +176,7 @@ export default function App() {
                     )}
                     {tab === 'store' && (
                       <motion.div key="store" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="h-full">
-                        <Treasury words={words} user={user!} />
+                        <Treasury words={words} user={user!} settings={settings} persistChanges={persistGlobal} />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -189,7 +188,7 @@ export default function App() {
                   </button>
                   <button onClick={() => setTab('hall')} className={`nav-item flex flex-col items-center space-y-1 ${tab === 'hall' ? 'nav-active' : 'text-slate-500'}`}>
                     <Trophy className="w-5 h-5" />
-                    <span className="text-[10px] font-bold">封神碑</span>
+                    <span className="text-[10px] font-bold">封神榜</span>
                   </button>
                   <button onClick={() => setTab('store')} className={`nav-item flex flex-col items-center space-y-1 ${tab === 'store' ? 'nav-active' : 'text-slate-500'}`}>
                     <Swords className="w-5 h-5" />
@@ -215,7 +214,17 @@ export default function App() {
             )}
             {view === 'admin' && (
               <motion.div key="admin" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="flex-1 flex flex-col">
-                <Admin settings={settings} setSettings={(s) => persistGlobal(null, null, s)} words={words} setWords={(w) => persistGlobal(w, null, null)} batches={batches} setBatches={(b) => persistGlobal(null, b, null)} users={users} setUsers={(u) => { /* Only update local state if needed */ setUsers(u); }} setView={setView} curUser={user} setCurUser={setUser} />
+                <Admin 
+                  settings={settings} 
+                  words={words} 
+                  batches={batches} 
+                  users={users} 
+                  persistGlobal={persistGlobal}
+                  setUsers={setUsers} 
+                  setView={setView} 
+                  curUser={user} 
+                  setCurUser={setUser} 
+                />
               </motion.div>
             )}
           </AnimatePresence>

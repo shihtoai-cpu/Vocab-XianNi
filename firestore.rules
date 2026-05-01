@@ -11,6 +11,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isSovereign() {
+      return isSignedIn() && (
+        request.auth.token.email == "shihto.ai@gmail.com" || 
+        request.auth.token.email == "test@xianni.auth"
+      );
+    }
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
@@ -23,16 +30,17 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn(); // Allow listing for Hall of Fame
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow list: if true; // 允許山門前感應道友氣息 (Public list for selection)
+      allow get: if true;
+      allow create: if isSignedIn(); 
+      allow update: if isOwner(userId) || isSovereign();
+      allow delete: if isSovereign(); // 僅限主宰可焚毀修士名冊
     }
 
     // Global Config
     match /global/config {
-      allow read: if true; // Allow landing page to see basic app config if needed
-      allow write: if isSignedIn(); 
+      allow read: if true; 
+      allow write: if isSovereign(); // 僅限主宰可修改天道設定與仙冊
     }
   }
 }

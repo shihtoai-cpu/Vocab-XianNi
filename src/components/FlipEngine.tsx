@@ -36,15 +36,15 @@ export default function FlipEngine({ word, zh, pos, onResult, onBack }: FlipEngi
 
   const evaluate = (isCorrect: boolean) => {
     if (grade) return; 
-    let res = { label: 'C', color: 'text-red-500', pts: -5 };
+    let res = { label: '凡', color: 'text-red-500', pts: -5 };
     if (isCorrect) {
-      if (flipTime < 1.5) res = { label: 'SSS', color: 'text-red-600 font-black animate-pulse', pts: 50 };
-      else if (flipTime < 3) res = { label: 'S', color: 'text-orange-500', pts: 30 };
-      else if (flipTime < 6) res = { label: 'A', color: 'text-emerald-400', pts: 20 };
-      else res = { label: 'B', color: 'text-slate-400', pts: 10 };
+      if (flipTime < 1.5) res = { label: '天', color: 'text-red-600 font-black animate-pulse', pts: 50 };
+      else if (flipTime < 3) res = { label: '地', color: 'text-orange-500', pts: 30 };
+      else if (flipTime < 6) res = { label: '玄', color: 'text-emerald-400', pts: 20 };
+      else res = { label: '黃', color: 'text-slate-400', pts: 10 };
     }
     setGrade(res);
-    if (res.pts > 0 && res.label === 'SSS') {
+    if (res.pts > 0 && res.label === '天') {
         confetti({ particleCount: 50, spread: 30, origin: { y: 0.7 } });
     }
   };
@@ -91,8 +91,8 @@ export default function FlipEngine({ word, zh, pos, onResult, onBack }: FlipEngi
                   <h3 className="text-3xl font-bold text-white mt-2">{zh}</h3>
                 </div>
                 <div className="flex space-x-4 w-full">
-                  <button onClick={(e) => { e.stopPropagation(); evaluate(false); }} className="flex-1 py-5 rounded bg-red-950/20 border border-red-500/30 text-red-500 font-black text-xs uppercase tracking-widest">遺忘</button>
-                  <button onClick={(e) => { e.stopPropagation(); evaluate(true); }} className="flex-1 py-5 rounded bg-indigo-950/20 border border-indigo-500/30 text-indigo-400 font-black text-xs uppercase tracking-widest">通曉</button>
+                  <button onClick={(e) => { e.stopPropagation(); evaluate(false); }} className="flex-1 py-5 rounded bg-red-950/20 border border-red-500/30 text-red-500 font-black text-xs uppercase tracking-widest">晦澀</button>
+                  <button onClick={(e) => { e.stopPropagation(); evaluate(true); }} className="flex-1 py-5 rounded bg-indigo-950/20 border border-indigo-500/30 text-indigo-400 font-black text-xs uppercase tracking-widest">通達</button>
                 </div>
               </div>
             )}

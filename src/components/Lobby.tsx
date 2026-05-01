@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { User, AppSettings } from '../types';
+import { User, AppSettings, Word } from '../types';
 import { getRealmInfo, getAncientRealm, getMasteredPrefix, ANCIENT_REALMS } from '../constants';
 import { ShieldCheck, Camera, Sword, RotateCcw, Zap, ChevronRight, LogOut, Sparkles, Move, Maximize, X, Check } from 'lucide-react';
 
@@ -34,7 +34,7 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
   const canRebirth = ancient.n === "九星古神";
 
   const handleRebirth = () => {
-    if (!confirm("確定要涅槃重修嗎？積分將會歸零，但您的轉世次數將會增加，獲得更高階的修士之證！")) return;
+    if (!confirm("確定要涅槃重修嗎？一身修為將歸還天地，但閣下將獲得更高階的修士之證，轉世重啟！")) return;
     
     onUpdate({
       ...user,
@@ -197,7 +197,7 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
                 onClick={saveAvatar} 
                 className="flex-[2] py-4 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl text-white text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all flex items-center justify-center gap-2"
               >
-                <Check size={16} /> 刻印聖像
+                <Check size={16} /> 烙印聖像
               </button>
             </div>
           </div>
@@ -334,21 +334,21 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
 
       <div className="grid grid-cols-2 gap-4">
         <div className="glass p-5 rounded text-center border-b-2 border-indigo-500/50">
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">今日試煉</p>
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">今日修道進度</p>
           <p className="text-3xl font-black text-white font-mono">{user.stats.rounds} / {settings.rounds}</p>
         </div>
         <div className="glass p-5 rounded text-center border-b-2 border-slate-700">
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">時光屋</p>
-          <p className="text-3xl font-black text-indigo-400 font-mono">{user.stats.spirit} 題</p>
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">仙凡悟理</p>
+          <p className="text-3xl font-black text-indigo-400 font-mono">{user.stats.spirit} 卷</p>
         </div>
       </div>
 
       <div className="flex-1 space-y-4">
         {words.length === 0 && (
-          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-center space-y-2">
-            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">仙冊空虛</p>
-            <p className="text-[10px] text-amber-500/70">主宰殿尚未封存經書，請前往主宰殿匯入單字庫。</p>
-          </div>
+            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-center space-y-2">
+              <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">仙冊空虛</p>
+              <p className="text-[10px] text-amber-500/70 leading-relaxed">道友，本珠識海中尚無經文。請主宰（點擊右上盾牌）進入「主宰殿」匯入 CSV 經書並點擊「封存法旨」方可開啟試煉。</p>
+            </div>
         )}
         
         {canRebirth && (
@@ -371,15 +371,21 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
         
         <div className="grid grid-cols-2 gap-4">
           <div 
-            onClick={() => user.stats.rounds < settings.rounds && setView('trial')} 
+            onClick={() => {
+              if (user.stats.rounds >= settings.rounds) {
+                alert("今日道感已圓滿，欲速則不達。請明朝再會！");
+                return;
+              }
+              setView('trial');
+            }} 
             className={`glass p-6 rounded flex flex-col items-center justify-center space-y-4 cursor-pointer transition-all active:scale-95 ${user.stats.rounds >= settings.rounds ? 'opacity-50 grayscale' : 'hover:border-indigo-500 border-transparent border'}`}
           >
             <div className={`w-14 h-14 rounded flex items-center justify-center text-white ${user.stats.rounds >= settings.rounds ? 'bg-slate-800' : 'bg-indigo-600 shadow-lg shadow-indigo-500/20'}`}>
               <Sword size={28} />
             </div>
             <div className="text-center">
-              <h3 className="font-black text-white text-lg">今日試煉</h3>
-              <p className="text-[10px] text-slate-500 uppercase tracking-tighter">{user.stats.rounds >= settings.rounds ? '感悟已滿' : '分身 · 修道'}</p>
+              <h3 className="font-black text-white text-lg">本日試煉</h3>
+              <p className="text-[10px] text-slate-500 uppercase tracking-tighter">{user.stats.rounds >= settings.rounds ? '靈台已滿' : '神識 · 悟道'}</p>
             </div>
           </div>
 
@@ -392,7 +398,7 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
             </div>
             <div className="text-center">
               <h3 className="font-black text-white text-lg">逆練神識</h3>
-              <p className="text-[10px] text-slate-500 uppercase tracking-tighter">本尊 · 古神</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-tighter">本尊 · 淬鍊</p>
             </div>
           </div>
         </div>
@@ -404,18 +410,18 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded"><Zap size={24} /></div>
             <div>
-              <h4 className="font-bold text-white">天逆空間</h4>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest">精神時光屋</p>
+              <h4 className="font-bold text-white uppercase tracking-widest">天逆空間</h4>
+              <p className="text-[9px] text-slate-500 uppercase tracking-widest">無間修煉 · 修羅場</p>
             </div>
           </div>
           <ChevronRight className="text-slate-700 mr-2" />
         </div>
       </div>
 
-      <button onClick={onLogout} className="w-full text-slate-600 text-xs font-black tracking-[0.5em] uppercase py-8 flex items-center justify-center gap-2">
+      <button onClick={onLogout} className="w-full text-slate-700 text-[10px] font-black tracking-[0.6em] uppercase py-10 flex items-center justify-center gap-2 hover:text-white transition-colors">
         <LogOut size={14} />
-        神魂離體 (登出)
+        神魂歸位 (退出)
       </button>
-    </div>
+</div>
   );
 }

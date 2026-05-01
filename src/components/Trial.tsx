@@ -24,8 +24,12 @@ export default function Trial({ user, settings, words, onUpdate, setView }: Tria
   const [res, setRes] = useState(false);
 
   useEffect(() => {
+    if (words.length === 0) { 
+      // Do nothing, let the empty view handle it
+      return; 
+    }
     if (words.length < 5) { 
-      alert("仙冊不足 (少於 5 卷)，無法開啟試煉！"); 
+      alert("仙冊經書不足 (少於 5 卷)，法陣無法開啟！請主宰前往主宰殿匯入更多經書。"); 
       setView('lobby'); 
       return; 
     }
@@ -50,9 +54,7 @@ export default function Trial({ user, settings, words, onUpdate, setView }: Tria
     const currentWordStats = user.stats.wordStats || {};
     const oldScore = currentWordStats[wordKey] || 0;
     
-    // Mastery algorithm:
-    // Success adds speed-based points (1-10).
-    // Failure cuts score significantly to force review.
+    // Mastery algorithm
     let newWordScore = ok ? oldScore + pts : Math.floor(oldScore * 0.5);
     newWordScore = Math.max(0, Math.min(100, newWordScore));
 
@@ -69,6 +71,7 @@ export default function Trial({ user, settings, words, onUpdate, setView }: Tria
     const updatedUser = {
       ...user,
       exp: user.exp + pts,
+      ancientExp: (user.ancientExp || 0) + (ok ? 1 : 0), // Also add to ancient exp
       stats: {
         ...user.stats,
         wordStats: {
@@ -87,17 +90,17 @@ export default function Trial({ user, settings, words, onUpdate, setView }: Tria
       onUpdate(updatedUser);
     } else {
       if (currentErrs.length === 0) {
-        alert("此輪感悟圓滿！神識更進一步。");
+        alert("此輪試煉圓滿！神識更進一步。");
         finish(true, updatedUser);
       } else if (currentErrs.length <= settings.errors && !res) {
-        alert(`神識受損！開啟敗部復活重修 (共 ${currentErrs.length} 題)`);
+        alert(`神識受損！開啟敗部重修陣 (共 ${currentErrs.length} 題)`);
         setRes(true); 
         setQ([...currentErrs]); 
         setErrs([]); 
         setIdx(0);
-        onUpdate(updatedUser); // Still update user stats
+        onUpdate(updatedUser);
       } else {
-        alert("道心受挫，今日試煉終止！");
+        alert("道心受挫，此次試煉終止！");
         finish(false, updatedUser);
       }
     }
@@ -114,12 +117,16 @@ export default function Trial({ user, settings, words, onUpdate, setView }: Tria
   };
 
   if (!q[idx]) return (
-    <div className="p-10 text-center flex flex-col items-center justify-center h-screen space-y-4">
-      <p className="text-slate-500 italic">正在感應試煉內容...</p>
+    <div className="p-10 text-center flex flex-col items-center justify-center h-screen space-y-4 bg-slate-950">
+      <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
+      <p className="text-slate-500 italic font-bold">正在感應試煉陣法...</p>
       {words.length === 0 && (
-        <button onClick={() => setView('lobby')} className="px-6 py-3 glass rounded-xl text-indigo-400">
-          暫回洞府
-        </button>
+        <div className="space-y-4 pt-4">
+          <p className="text-amber-500 text-xs">仙冊空虛，無經書可練</p>
+          <button onClick={() => setView('lobby')} className="px-8 py-3 glass rounded-xl text-indigo-400 font-bold uppercase tracking-widest border border-indigo-500/20 active:scale-95 transition-all">
+            暫歸洞府
+          </button>
+        </div>
       )}
     </div>
   );
@@ -133,12 +140,12 @@ export default function Trial({ user, settings, words, onUpdate, setView }: Tria
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-95 group border border-white/5 shadow-xl"
           >
             <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="text-[10px] font-black tracking-widest uppercase">儲存修為並遁走</span>
+            <span className="text-[10px] font-black tracking-widest uppercase">封印修為並遁走</span>
           </button>
           
           <div className="flex flex-col pl-2">
             <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">今日試煉</span>
-            <span className="text-[9px] text-slate-600 font-mono tracking-tighter">進度：{idx + 1} / {q.length}</span>
+            <span className="text-[9px] text-slate-600 font-mono tracking-tighter">圓滿度：{idx + 1} / {q.length}</span>
           </div>
         </div>
         
