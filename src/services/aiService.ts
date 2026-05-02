@@ -33,7 +33,7 @@ export async function generateClozeQuestion(
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const difficultyHint = {
-    easy: "基礎啟蒙：語法極簡，句子非常短（建議 10 個單字以內），適合國小/國中初學者。內容要是生活平鋪直敘的場景，不要有複雜子句。",
+    easy: "基礎啟蒙：語法極簡，句子【絕對】要在 5 到 10 個單字以內，適合國小初學者。內容要是平鋪直敘的場景（如：I like to [____] books.），不要有任何從句或複雜結構。",
     medium: "進階程度：語法中等，包含複句，約高中/大學程度詞彙。內容應包含『台灣時事新聞』、『學術教科書』或『歷屆考題風格』。",
     hard: "神階程度：語法複雜，涉及專業領域或古風修辭。內容應包含『國際時事』、『深奧科學/道法』或『文學經典』。"
   }[difficulty];

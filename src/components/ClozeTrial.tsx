@@ -174,8 +174,8 @@ export default function ClozeTrial({ user, words, settings, onUpdate, setView }:
         <div className="text-xs font-black text-indigo-400">得分: {score}</div>
       </div>
 
-      <div className="flex-1 overflow-y-auto w-full">
-        <div className="max-w-2xl mx-auto px-6 py-10 space-y-10 pb-60"> 
+      <div className="flex-1 overflow-y-auto w-full scrollbar-hide">
+        <div className="max-w-2xl mx-auto px-6 py-10 space-y-10 pb-40"> 
           <AnimatePresence mode="wait">
             {loading ? (
               <motion.div 
@@ -183,10 +183,13 @@ export default function ClozeTrial({ user, words, settings, onUpdate, setView }:
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center min-h-[300px] space-y-4"
+                className="flex flex-col items-center justify-center min-h-[400px] space-y-6"
               >
-                <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-                <p className="text-slate-500 text-sm font-bold">天道衍化神卷中...</p>
+                <div className="relative">
+                  <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-20 animate-pulse" />
+                  <Loader2 className="w-12 h-12 text-indigo-500 animate-spin relative" />
+                </div>
+                <p className="text-slate-500 text-sm font-black tracking-[0.3em] animate-pulse">天道衍化神卷中...</p>
               </motion.div>
             ) : currentQ ? (
               <motion.div 
@@ -198,31 +201,33 @@ export default function ClozeTrial({ user, words, settings, onUpdate, setView }:
               >
                 <div className="space-y-6">
                   <div className="relative p-8 rounded-3xl bg-indigo-950/20 border border-indigo-500/20 shadow-2xl">
-                    <p className="text-xl md:text-2xl font-medium leading-relaxed text-slate-100">
+                    <p className="text-2xl md:text-3xl font-medium leading-relaxed text-slate-100 tracking-tight">
                       {currentQ.sentence}
                     </p>
                     {(selected || isCorrect !== null) && (
                       <motion.p 
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mt-6 text-sm text-indigo-300 font-bold leading-relaxed border-t border-indigo-500/20 pt-4"
+                        className="mt-6 text-xl text-indigo-300 font-bold leading-relaxed border-t border-indigo-500/20 pt-6"
                       >
-                        {currentQ.translation}
+                        譯：{currentQ.translation}
                       </motion.p>
                     )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-4">
                   {currentQ.options.map((opt, i) => {
                     const isAnswer = opt.word === currentQ.answer;
                     const isSelected = selected === opt.word;
                     
                     let btnStyle = "bg-slate-900/50 border-slate-800 text-slate-300";
                     if (isSelected) {
-                      btnStyle = isAnswer ? "bg-emerald-900/40 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "bg-red-900/40 border-red-500 text-red-400";
+                      btnStyle = isAnswer ? "bg-emerald-900/40 border-emerald-500 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]" : "bg-red-900/40 border-red-500 text-red-400";
                     } else if (selected && isAnswer) {
                       btnStyle = "bg-emerald-900/20 border-emerald-500/50 text-emerald-500/70";
+                    } else if (selected) {
+                      btnStyle = "bg-slate-900/20 border-slate-800/30 text-slate-600 opacity-50";
                     }
 
                     return (
@@ -230,25 +235,27 @@ export default function ClozeTrial({ user, words, settings, onUpdate, setView }:
                         key={i}
                         disabled={!!selected}
                         onClick={() => handleSelect(opt.word)}
-                        className={`group relative p-5 rounded-2xl border text-left transition-all duration-300 active:scale-[0.98] ${btnStyle}`}
+                        className={`group relative p-6 rounded-2xl border text-left transition-all duration-300 shadow-lg active:scale-[0.98] ${btnStyle}`}
                       >
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-1">
-                            <span className="text-lg font-black tracking-tight block">{opt.word}</span>
+                        <div className="flex justify-between items-center">
+                          <div className="space-y-2">
+                            <span className="text-xl font-black tracking-tight block uppercase">{opt.word}</span>
                             {selected && (
                               <motion.span 
-                                initial={{ opacity: 0 }} 
-                                animate={{ opacity: 1 }} 
-                                className="text-sm font-bold text-slate-500 uppercase tracking-widest block"
+                                initial={{ opacity: 0, height: 0 }} 
+                                animate={{ opacity: 1, height: 'auto' }} 
+                                className="text-base font-bold text-slate-400 uppercase tracking-widest block border-t border-white/5 pt-2"
                               >
                                 {opt.meaning}
                               </motion.span>
                             )}
                           </div>
-                          {isSelected && (
-                            isAnswer ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-1" /> : <XCircle className="w-5 h-5 text-red-500 mt-1" />
-                          )}
-                          {selected && isAnswer && !isSelected && <CheckCircle2 className="w-5 h-5 opacity-50 mt-1" />}
+                          <div className="flex-shrink-0">
+                            {isSelected && (
+                              isAnswer ? <CheckCircle2 className="w-8 h-8 text-emerald-500" /> : <XCircle className="w-8 h-8 text-red-500" />
+                            )}
+                            {selected && isAnswer && !isSelected && <CheckCircle2 className="w-8 h-8 opacity-50 text-emerald-500" />}
+                          </div>
                         </div>
                       </button>
                     );
@@ -256,13 +263,13 @@ export default function ClozeTrial({ user, words, settings, onUpdate, setView }:
                 </div>
 
                 {selected && currentQ.analysis && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 pt-4">
                     <button 
                       onClick={() => setShowAnalysis(!showAnalysis)}
-                      className="text-xs font-black text-indigo-400 uppercase tracking-[0.2em] flex items-center space-x-2 hover:text-indigo-300 transition-colors"
+                      className="text-sm font-black text-indigo-400 uppercase tracking-[0.2em] flex items-center justify-center space-x-3 hover:text-indigo-300 transition-colors bg-indigo-500/10 p-4 rounded-2xl border border-indigo-500/20 w-full"
                     >
-                      <Sparkles size={12} />
-                      <span>{showAnalysis ? "隱藏神卷解析" : "點擊查看神卷解析"}</span>
+                      <Sparkles size={16} className={showAnalysis ? "text-amber-400" : ""} />
+                      <span>{showAnalysis ? "收回神卷解析" : "開啟神卷解析 (法引)"}</span>
                     </button>
                     
                     <AnimatePresence>
@@ -273,7 +280,8 @@ export default function ClozeTrial({ user, words, settings, onUpdate, setView }:
                           exit={{ opacity: 0, height: 0 }}
                           className="overflow-hidden"
                         >
-                          <div className="p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 text-slate-400 text-sm leading-relaxed font-medium">
+                          <div className="p-8 rounded-3xl bg-indigo-950/40 border border-indigo-500/20 text-slate-200 text-lg leading-loose shadow-inner">
+                            <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4 border-b border-indigo-500/10 pb-2">【神卷解析 · 悟道】</div>
                             {currentQ.analysis}
                           </div>
                         </motion.div>
@@ -286,6 +294,7 @@ export default function ClozeTrial({ user, words, settings, onUpdate, setView }:
           </AnimatePresence>
         </div>
       </div>
+
 
       {selected && (
         <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#020617] via-[#020617] to-transparent z-50">

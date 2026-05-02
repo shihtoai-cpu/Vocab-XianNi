@@ -89,6 +89,37 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
     r.readAsText(f);
   };
 
+  const handleAuth = async () => {
+    if (pw === localSettings.adminPw) {
+      // 1. 先開啟本地主宰權限
+      setAuth(true);
+      
+      // 2. 強制在雲端修士存檔中刻印主宰標記
+      if (curUser && curUser.id) {
+        try {
+          const { updateDoc, doc, getDoc } = await import('firebase/firestore');
+          const userRef = doc(db, 'users', curUser.id);
+          
+          console.log("正在刻印主宰印記，目標 UID:", curUser.id);
+          await updateDoc(userRef, { isMaster: true });
+          
+          // 重新抓取一次確認
+          const snap = await getDoc(userRef);
+          if (snap.exists() && snap.data().isMaster === true) {
+            console.log("主宰印記刻印成功！天道已認證您的權限。");
+            setCurUser({ ...curUser, isMaster: true });
+            showAlert("權限解開", "主宰印記已成功刻印，您現在具備全域修改權限。");
+          }
+        } catch (err) {
+          console.error("主宰印記刻印失敗 (可能是權限不足):", err);
+          showAlert("權限受阻", "無法在大道中留下主宰印記。請確認您的網路連線，或嘗試重新整理頁面再試。");
+        }
+      }
+    } else {
+      showAlert("禁制回饋", "密碼錯誤");
+    }
+  };
+
   if (!auth) return (
     <div className="p-8 flex flex-col items-center justify-center min-h-screen space-y-6 animate-in zoom-in">
       <ShieldCheck className="w-16 h-16 text-indigo-500" />
@@ -99,9 +130,9 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
         className="w-full bg-slate-950 border border-slate-800 p-4 rounded text-center focus:border-indigo-500 outline-none text-2xl text-white font-mono" 
         value={pw} 
         onChange={e => setPw(e.target.value)} 
-        onKeyUp={e => e.key === 'Enter' && (pw === localSettings.adminPw ? setAuth(true) : showAlert("禁制回饋", "密碼錯誤"))} 
+        onKeyUp={e => e.key === 'Enter' && handleAuth()} 
       />
-      <button onClick={() => pw === localSettings.adminPw ? setAuth(true) : showAlert("禁制回饋", "密碼錯誤")} className="w-full py-4 btn-gold text-lg tracking-widest">解開禁制</button>
+      <button onClick={handleAuth} className="w-full py-4 btn-gold text-lg tracking-widest">解開禁制</button>
       <button onClick={() => setView('lobby')} className="text-slate-600 font-bold text-[10px] uppercase tracking-[0.5em]">返回洞府</button>
     </div>
   );
@@ -209,11 +240,15 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
                       onClick={() => {
                         showPrompt("更名法旨", "請輸入新修士道號：", u.name, async (newName) => {
                           if (newName && newName !== u.name) {
+                            const trimmed = newName.trim();
+                            const isDuplicate = localUsers.some((x, idx) => idx !== i && x.name.toLowerCase() === trimmed.toLowerCase());
+                            if (isDuplicate) return showAlert("天道排斥", "此道號已有修士佔用，請另尋名號。");
+                            
                             if (u.id) {
-                              await updateDoc(doc(db, 'users', u.id), { name: newName });
+                              await updateDoc(doc(db, 'users', u.id), { name: trimmed });
                             }
                             const newList = [...localUsers];
-                            newList[i].name = newName;
+                            newList[i].name = trimmed;
                             setLocalUsers(newList);
                             persistUsers(newList);
                           }
@@ -248,11 +283,14 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
                 }} className="text-[9px] bg-slate-950 p-2 rounded border border-slate-800 text-slate-400 font-bold uppercase hover:text-white">調整修為</button>
 
                 <button onClick={() => {
-                  showPrompt("密碼重設", "為主宰設置此修士的臨時登入密碼 (留空則取消)：", u.recoveryPw || "", async (newPw) => {
+                  showPrompt("密碼重設", "為主宰設置此修士的臨時登入密碼 (留空則取消，至少4位元)：", u.recoveryPw || "", async (newPw) => {
+                    const pwVal = newPw.trim();
+                    if (pwVal && pwVal.length < 4) return showAlert("靈壓不足", "天道法則規定，靈壓密碼至少需 4 位以上。");
+                    
                     if (u.id) {
-                      await updateDoc(doc(db, 'users', u.id), { recoveryPw: newPw || null });
+                      await updateDoc(doc(db, 'users', u.id), { recoveryPw: pwVal || null });
                       const newList = [...localUsers];
-                      newList[i].recoveryPw = newPw || undefined;
+                      newList[i].recoveryPw = pwVal || undefined;
                       setLocalUsers(newList);
                       persistUsers(newList);
                     }

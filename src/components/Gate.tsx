@@ -85,6 +85,9 @@ export default function Gate({ setView, setUser }: GateProps) {
     setLoading(true);
     const email = `${nickname.trim()}${NICKNAME_DOMAIN}`;
     
+    // Auto-pad password for Firebase (which requires 6 min)
+    const finalPassword = password.length < 6 ? `${password}_xian` : password;
+    
     // Check for Master-set recovery password first
     const localMatch = registeredUsers.find(u => u.name === nickname.trim());
     if (localMatch && localMatch.recoveryPw && localMatch.recoveryPw === password) {
@@ -97,10 +100,10 @@ export default function Gate({ setView, setUser }: GateProps) {
 
     try {
       if (mode === 'signup') {
-        await createUserWithEmailAndPassword(auth, email, password);
+        await createUserWithEmailAndPassword(auth, email, finalPassword);
         setView('reg');
       } else {
-        const result = await signInWithEmailAndPassword(auth, email, password);
+        const result = await signInWithEmailAndPassword(auth, email, finalPassword);
         const exists = await checkUserExists(result.user.uid);
         if (!exists) setView('reg');
       }
@@ -226,7 +229,7 @@ export default function Gate({ setView, setUser }: GateProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[9px] text-slate-500 font-black uppercase tracking-[0.2em] px-1">靈壓密碼</label>
+              <label className="text-[9px] text-slate-500 font-black uppercase tracking-[0.2em] px-1">靈壓密碼 (至少 4 位)</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
                 <input 

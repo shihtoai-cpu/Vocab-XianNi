@@ -14,33 +14,18 @@ service cloud.firestore {
     function isSovereign() {
       return isSignedIn() && (
         request.auth.token.email == "shihto.ai@gmail.com" || 
-        request.auth.token.email == "test@xianni.auth"
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isMaster == true
       );
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function isValidUser(data) {
-      return data.name is string && data.name.size() <= 64 &&
-             data.exp is number &&
-             data.stats is map;
-    }
-
-    // Users collection
     match /users/{userId} {
-      allow list: if true; // 允許山門前感應道友氣息 (Public list for selection)
-      allow get: if true;
-      allow create: if isSignedIn(); 
-      allow update: if isOwner(userId) || isSovereign();
-      allow delete: if isSovereign(); // 僅限主宰可焚毀修士名冊
+      allow read: if isSignedIn();
+      allow write: if request.auth.uid == userId || isSovereign();
     }
 
-    // Global Config
-    match /global/config {
-      allow read: if true; 
-      allow write: if isSovereign(); // 僅限主宰可修改天道設定與仙冊
+    match /global/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSovereign();
     }
   }
 }

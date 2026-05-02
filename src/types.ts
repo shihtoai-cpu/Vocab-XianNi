@@ -43,6 +43,8 @@ export interface User {
   exp: number;
   ancientExp?: number;
   rotations?: number; // 轉數 (涅槃重修次數)
+  isMaster?: boolean;
+  recoveryPw?: string;
   stats: UserStats;
 }
 

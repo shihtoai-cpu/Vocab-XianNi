@@ -20,11 +20,13 @@ const AVATARS = [
 interface RegisterProps {
   onBack: () => void;
   onDone: (user: User) => void;
+  users: User[];
 }
 
-export default function Register({ onBack, onDone }: RegisterProps) {
+export default function Register({ onBack, onDone, users }: RegisterProps) {
   const [n, setN] = useState(""); 
   const [a, setA] = useState(AVATARS[0]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (auth.currentUser) {
@@ -41,9 +43,18 @@ export default function Register({ onBack, onDone }: RegisterProps) {
   }, []);
 
   const handleRegister = () => {
-    if (n.trim()) {
-      onDone({ 
-        name: n.trim(), 
+    const trimmedName = n.trim();
+    if (!trimmedName) return;
+
+    // Check for duplicate name
+    const isDuplicate = users.some(u => u.name.toLowerCase() === trimmedName.toLowerCase());
+    if (isDuplicate) {
+      setError("此道號已有人使用，請重新感悟。");
+      return;
+    }
+
+    onDone({ 
+      name: trimmedName, 
         pw: '', // Not used with Google Auth
         avatar: a, 
         exp: 0, 
@@ -56,7 +67,6 @@ export default function Register({ onBack, onDone }: RegisterProps) {
           wordHistory: {}
         }
       });
-    }
   };
 
   return (
@@ -74,11 +84,17 @@ export default function Register({ onBack, onDone }: RegisterProps) {
           <input 
             type="text" 
             value={n}
-            onChange={(e) => setN(e.target.value)}
+            onChange={(e) => {
+              setN(e.target.value);
+              setError(null);
+            }}
             disabled={auth.currentUser?.email?.endsWith("@xianni.auth")}
             placeholder="輸入汝之修真稱號..."
-            className={`w-full h-14 glass rounded-xl px-6 text-white font-bold border border-white/5 focus:border-indigo-500/50 outline-none transition-all placeholder:text-slate-700 ${auth.currentUser?.email?.endsWith("@xianni.auth") ? 'opacity-50 cursor-not-allowed bg-white/5' : ''}`}
+            className={`w-full h-14 glass rounded-xl px-6 text-white font-bold border ${error ? 'border-red-500/50' : 'border-white/5'} focus:border-indigo-500/50 outline-none transition-all placeholder:text-slate-700 ${auth.currentUser?.email?.endsWith("@xianni.auth") ? 'opacity-50 cursor-not-allowed bg-white/5' : ''}`}
           />
+          {error && (
+            <p className="text-red-400 text-[10px] font-bold mt-1 pl-1 animate-pulse">{error}</p>
+          )}
         </div>
 
         <div className="space-y-4">

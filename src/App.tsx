@@ -79,33 +79,35 @@ export default function App() {
 
   // Use a separate effect for data that requires authentication
   useEffect(() => {
-    if (!user) {
-      setUsers([]);
-      return;
-    }
-
-    // Sync Users (for Hall of Fame and current user updates)
-    const unsubUsers = onSnapshot(collection(db, 'users'), snapshot => {
-      const cloudUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-      setUsers(cloudUsers);
-      
-      // Sync current user state if they are in the cloud list
-      const myUid = auth.currentUser?.uid;
-      if (myUid) {
-        const self = cloudUsers.find(u => u.id === myUid);
-        if (self) {
-          // Compare to prevent feedback loops if needed, but usually onSnapshot is fine
-          setUser(self);
-        }
+    const unsubAuthLoad = onAuthStateChanged(auth, (authUser) => {
+      if (!authUser) {
+        setUsers([]);
+        return;
       }
-    }, err => {
-      import('./lib/firebase').then(({ handleFirestoreError, OperationType }) => {
-        handleFirestoreError(err, OperationType.LIST, 'users');
+
+      // Sync Users (for Hall of Fame and unique name check)
+      const unsubUsers = onSnapshot(collection(db, 'users'), snapshot => {
+        const cloudUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers(cloudUsers);
+        
+        // Sync current user state if they are in the cloud list
+        if (authUser.uid) {
+          const self = cloudUsers.find(u => u.id === authUser.uid);
+          if (self) {
+            setUser(self);
+          }
+        }
+      }, err => {
+        import('./lib/firebase').then(({ handleFirestoreError, OperationType }) => {
+          handleFirestoreError(err, OperationType.LIST, 'users');
+        });
       });
+
+      return () => unsubUsers();
     });
 
-    return () => unsubUsers();
-  }, [user]);
+    return () => unsubAuthLoad();
+  }, []);
 
   const persistGlobal = async (changes: { words?: Word[]; batches?: Batch[]; settings?: AppSettings }) => {
     try {
@@ -119,7 +121,7 @@ export default function App() {
         words: nextWords,
         batches: nextBatches,
         settings: nextSettings
-      });
+      }, { merge: true });
       
       // 雲端確認寫入成功後，才更新本地狀態
       if (changes.words) setWords([...changes.words]);
@@ -173,7 +175,10 @@ export default function App() {
             )}
             {view === 'reg' && (
               <motion.div key="reg" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="flex-1 flex flex-col">
-                <Register onBack={handleLogout} onDone={async (u) => { 
+                <Register 
+                  users={users}
+                  onBack={handleLogout} 
+                  onDone={async (u) => { 
                   if (!auth.currentUser) return;
                   setUser(u);
                   try {
