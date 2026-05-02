@@ -160,7 +160,7 @@ export default function App() {
           <AnimatePresence mode="wait">
             {view === 'gate' && (
               <motion.div key="gate" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
-                <Gate setView={setView} setUser={setUser} />
+                <Gate setView={setView} setUser={setUser} users={users} />
               </motion.div>
             )}
             {view === 'reg' && (

@@ -36,6 +36,23 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
+  // Sync with props when background updates happen (from Cloud sync)
+  useEffect(() => {
+    setLocalWords(initialWords);
+  }, [initialWords]);
+
+  useEffect(() => {
+    setLocalBatches(initialBatches);
+  }, [initialBatches]);
+
+  useEffect(() => {
+    setLocalSettings(initialSettings);
+  }, [initialSettings]);
+
+  useEffect(() => {
+    setLocalUsers(initialUsers);
+  }, [initialUsers]);
+
   // Custom Modal State
   const [modal, setModal] = useState<{
     show: boolean;

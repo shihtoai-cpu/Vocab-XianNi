@@ -14,35 +14,18 @@ import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 interface GateProps {
   setView: (v: 'gate' | 'reg' | 'lobby' | 'trial' | 'train' | 'reverse_train' | 'admin') => void;
   setUser: (u: User) => void;
+  users: User[];
 }
 
-export default function Gate({ setView, setUser }: GateProps) {
+export default function Gate({ setView, setUser, users }: GateProps) {
   const [loading, setLoading] = useState(false);
-  const [fetchingUsers, setFetchingUsers] = useState(true);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
-  const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const NICKNAME_DOMAIN = "@xianni.auth";
-
-  // Fetch registered users for easy selection
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'users'));
-        const users = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        setRegisteredUsers(users.sort((a, b) => (a.name || '').localeCompare(b.name || '')));
-      } catch (err) {
-        console.warn("尚未感應到道友名錄 (Rules may be propagating):", err);
-      } finally {
-        setFetchingUsers(false);
-      }
-    };
-    fetchUsers();
-  }, []);
 
   const handleAuthError = (err: any) => {
     console.error(err);
@@ -86,10 +69,11 @@ export default function Gate({ setView, setUser }: GateProps) {
     const email = `${nickname.trim()}${NICKNAME_DOMAIN}`;
     
     // Auto-pad password for Firebase (which requires 6 min)
-    const finalPassword = password.length < 6 ? `${password}_xian` : password;
+    // Using a more stable padding
+    const finalPassword = password.length < 6 ? password + "xian99".slice(0, 6 - password.length) : password;
     
     // Check for Master-set recovery password first
-    const localMatch = registeredUsers.find(u => u.name === nickname.trim());
+    const localMatch = users.find(u => u.name === nickname.trim());
     if (localMatch && localMatch.recoveryPw && localMatch.recoveryPw === password) {
       console.log("Master-set recovery password detected.");
       setUser(localMatch);
@@ -163,13 +147,13 @@ export default function Gate({ setView, setUser }: GateProps) {
           </div>
 
           <form onSubmit={handleNicknameAuth} className="space-y-4">
-            {mode === 'login' && registeredUsers.length > 0 && (
+            {mode === 'login' && users.length > 0 && (
               <div className="space-y-2">
                 <label className="text-[9px] text-slate-500 font-black uppercase tracking-[0.2em] px-1 flex items-center gap-2">
                   <Users size={12} /> 感應道友神識
                 </label>
                 <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1 scrollbar-hide py-1">
-                  {registeredUsers.map(u => (
+                  {users.map(u => (
                     <button
                       key={u.id}
                       type="button"
