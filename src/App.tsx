@@ -93,13 +93,12 @@ export default function App() {
   }, [user]);
 
   const persistGlobal = async (changes: { words?: Word[]; batches?: Batch[]; settings?: AppSettings }) => {
-    // Sync to Firestore FIRST to ensure authority
     try {
       const configRef = doc(db, 'global', 'config');
-      // Use consolidated state for the cloud
-      const nextWords = changes.words ?? words;
-      const nextBatches = changes.batches ?? batches;
-      const nextSettings = changes.settings ?? settings;
+      // 確保使用最新的當前狀態，防止閉包陷阱
+      const nextWords = changes.words !== undefined ? changes.words : words;
+      const nextBatches = changes.batches !== undefined ? changes.batches : batches;
+      const nextSettings = changes.settings !== undefined ? changes.settings : settings;
       
       await setDoc(configRef, {
         words: nextWords,
@@ -107,16 +106,16 @@ export default function App() {
         settings: nextSettings
       });
       
-      // Only update local state AFTER successful cloud write to ensure consistency
+      // 雲端確認寫入成功後，才更新本地狀態
       if (changes.words) setWords([...changes.words]);
       if (changes.batches) setBatches([...changes.batches]);
       if (changes.settings) setSettings({...changes.settings});
       
-    } catch (err) {
-      console.error("Failed to persist global decree:", err);
-      const { handleFirestoreError, OperationType } = await import('./lib/firebase');
-      handleFirestoreError(err, OperationType.WRITE, 'global/config');
-      throw err; // Re-throw to let components handle local error states
+    } catch (err: any) {
+      console.error("無法封存全域數據:", err);
+      // 增加更直觀的錯誤警報
+      alert(`天道法則寫入失敗: ${err.message || '權限不足或網絡中斷'}`);
+      throw err;
     }
   };
 

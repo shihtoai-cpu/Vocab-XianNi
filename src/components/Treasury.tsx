@@ -34,7 +34,8 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
     if (!editingWord || !editForm.en || !editForm.zh) return;
 
     if (adminPwInput.trim() !== settings.adminPw) {
-      setErrorMessage("主宰印信（密碼）有誤，法旨難成！");
+      alert("主宰印信（密碼）有誤，法旨難成！");
+      setErrorMessage("密碼錯誤，請重新核對。");
       return;
     }
 
@@ -44,10 +45,11 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
     
     try {
       await persistChanges({ words: newWords });
+      alert("法旨已成，經文已重新封存。");
       setEditingWord(null);
     } catch (err) {
       console.error(err);
-      setErrorMessage("天道（數據庫）混亂，法旨傳達失敗。");
+      alert("天道（數據庫）響應失敗，請稍後再試。");
     } finally {
       setIsSaving(false);
     }
@@ -57,7 +59,8 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
     if (!editingWord) return;
     
     if (adminPwInput.trim() !== settings.adminPw) {
-      setErrorMessage("印信不符！凡人豈敢隨意焚毀仙卷。");
+      alert("主宰印信（密碼）有誤，不可隨意焚毀仙卷！");
+      setErrorMessage("密碼錯誤。");
       return;
     }
 
@@ -69,10 +72,11 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
     
     try {
       await persistChanges({ words: newWords });
+      alert("焚毀成功，此經文已從世間消逝。");
       setEditingWord(null);
     } catch (err) {
       console.error(err);
-      setErrorMessage("焚毀失敗，通天塔受阻。");
+      alert("焚毀失敗，通天塔受阻（雲端寫入逾時）。");
     } finally {
       setIsSaving(false);
     }
