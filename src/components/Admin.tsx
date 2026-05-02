@@ -145,13 +145,33 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
                     }} 
                   />
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-white uppercase tracking-tight">{u.name}</p>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <p className="text-sm font-bold text-white uppercase tracking-tight">{u.name}</p>
+                    <button 
+                      onClick={async () => {
+                        const newName = prompt("更易修士道號", u.name);
+                        if (newName && newName !== u.name) {
+                          if (u.id) {
+                            await updateDoc(doc(db, 'users', u.id), { name: newName });
+                          }
+                          const newList = [...localUsers];
+                          newList[i].name = newName;
+                          setLocalUsers(newList);
+                          persistUsers(newList);
+                        }
+                      }}
+                      className="text-[8px] text-indigo-400 border border-indigo-400/30 px-1 rounded hover:bg-indigo-400 hover:text-white transition-all uppercase"
+                    >
+                      更名
+                    </button>
+                  </div>
                   <p className="text-[9px] text-slate-500 font-mono">UID: {u.id?.slice(0, 8)}... | EXP: {u.exp}</p>
+                  {u.recoveryPw && <p className="text-[9px] text-emerald-500 font-bold">主宰重設密碼: {u.recoveryPw}</p>}
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-2 mt-4">
+              <div className="grid grid-cols-3 gap-2 mt-4">
                 <button onClick={async () => {
                   const e = prompt("調整修士積分", u.exp.toString());
                   if (e !== null && u.id) {
@@ -160,8 +180,23 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
                     const newList = localUsers.map(x => x.id === u.id ? {...x, exp: newExp} : x);
                     setLocalUsers(newList);
                     persistUsers(newList);
+                    // Snappy update if editing self
+                    if (curUser && curUser.id === u.id) {
+                      setCurUser({...curUser, exp: newExp});
+                    }
                   }
-                }} className="text-[9px] bg-slate-950 p-2 rounded border border-slate-800 text-slate-500 font-bold uppercase hover:text-white">調整修為</button>
+                }} className="text-[9px] bg-slate-950 p-2 rounded border border-slate-800 text-slate-400 font-bold uppercase hover:text-white">調整修為</button>
+
+                <button onClick={async () => {
+                  const newPw = prompt("為主宰設置此修士的臨時登入密碼 (留空則取消)", u.recoveryPw || "");
+                  if (newPw !== null && u.id) {
+                    await updateDoc(doc(db, 'users', u.id), { recoveryPw: newPw || null });
+                    const newList = [...localUsers];
+                    newList[i].recoveryPw = newPw || undefined;
+                    setLocalUsers(newList);
+                    persistUsers(newList);
+                  }
+                }} className="text-[9px] bg-slate-950 p-2 rounded border border-slate-800 text-emerald-500 font-bold uppercase hover:bg-emerald-950/20">設置密碼</button>
 
                 <button onClick={async () => {
                   if (u.id && confirm(`確定要將修士 ${u.name} 逐出仙門？`)) {

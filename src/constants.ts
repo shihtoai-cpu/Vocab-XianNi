@@ -25,24 +25,41 @@ const REALMS_DEF = [
     { n: "空靈", s: STAGES, c: "text-purple-600" },
     { n: "空玄", s: STAGES, c: "text-rose-600" },
     { n: "空劫", s: ["大尊初期", "大尊中期", "大尊後期", "金尊", "天尊", "躍天尊"], c: "text-red-700" },
-    { n: "半步踏天", s: ["第一橋", "第二橋", "第三橋", "第四橋", "第五橋", "第六橋", "第七橋", "第八橋"], c: "text-yellow-500" },
-    { n: "踏天境", s: ["第九橋(永恆)"], c: "text-yellow-200" }
+    { n: "半步踏天", s: ["第一橋", "第二橋", "第三橋", "第四橋", "第五橋", "第六橋", "第七橋", "第八橋"], c: "text-yellow-500 font-bold" },
+    { n: "踏天境", s: ["第九橋(圓滿)", "一轉", "二轉", "三轉", "四轉", "五轉", "六轉", "七轉", "八轉", "九轉"], c: "text-yellow-200 font-black" }
 ];
 
 export const ALL_SUB = REALMS_DEF.flatMap(r => r.s.map(s => ({ m: r.n, s, c: r.c })));
 
 export const getRealmInfo = (exp: number): RealmInfo => {
     let acc = 0;
-    for (let i = 0; i < ALL_SUB.length; i++) {
-        // Extremely difficult: Base 20,000 with 25% geometric growth.
-        // Level 1: 20,000
-        // Level 2: 25,000
-        // Difficulty rises rapidly to ensure real mastery takes time.
-        const req = Math.floor(20000 * Math.pow(1.25, i));
+    const totalCount = ALL_SUB.length;
+    
+    // Find the index of "半步踏天 第一橋"
+    const bridgeIndex = ALL_SUB.findIndex(sub => sub.m === "半步踏天" && sub.s === "第一橋");
+    
+    for (let i = 0; i < totalCount; i++) {
+        let req = 0;
+        
+        if (i < bridgeIndex) {
+            // Early stages: Linear growth, very smooth.
+            // Base 500, adding 100 per level. 
+            // Total XP for ~100 early levels will be around 50k-70k.
+            req = 500 + (i * 100);
+        } else if (ALL_SUB[i].m === "半步踏天") {
+            // Bridges: Significant climb.
+            // 8 bridges * 15k = 120k.
+            // Total XP to clear bridges ~120k.
+            req = 15000; 
+        } else {
+            // 踏天境 Rotations (二轉, etc.)
+            req = 50000 + ((i - bridgeIndex) * 20000);
+        }
+
         if (exp < acc + req) return { ...ALL_SUB[i], idx: i, current: acc, next: acc + req };
         acc += req;
     }
-    return { ...ALL_SUB[ALL_SUB.length - 1], idx: ALL_SUB.length - 1, current: acc, next: Infinity };
+    return { ...ALL_SUB[totalCount - 1], idx: totalCount - 1, current: acc, next: Infinity };
 };
 
 export const ANCIENT_REALMS: AncientRealm[] = [

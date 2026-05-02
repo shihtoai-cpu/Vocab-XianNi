@@ -71,11 +71,21 @@ export default function Gate({ setView, setUser }: GateProps) {
     if (!nickname.trim() || !password) return;
     
     if (nickname.length < 2) return alert("道號太短，難以凝聚靈識。");
-    if (password.length < 6) return alert("靈壓不足，密碼至少需要六位。");
+    if (password.length < 4) return alert("靈壓不足，密碼至少需要四位。");
 
     setLoading(true);
     const email = `${nickname.trim()}${NICKNAME_DOMAIN}`;
     
+    // Check for Master-set recovery password first
+    const localMatch = registeredUsers.find(u => u.name === nickname.trim());
+    if (localMatch && localMatch.recoveryPw && localMatch.recoveryPw === password) {
+      console.log("Master-set recovery password detected.");
+      setUser(localMatch);
+      setView('lobby');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (mode === 'signup') {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -214,7 +224,7 @@ export default function Gate({ setView, setUser }: GateProps) {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="請輸入靈魄密碼..."
+                  placeholder="請輸入靈魄密碼 (至少4位)..."
                   className="w-full h-12 bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 text-white text-sm placeholder:text-slate-700 focus:border-indigo-500 outline-none transition-all"
                   required
                 />

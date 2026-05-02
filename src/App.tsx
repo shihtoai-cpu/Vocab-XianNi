@@ -79,10 +79,16 @@ export default function App() {
       return;
     }
 
-    // Sync Users (for Hall of Fame)
+    // Sync Users (for Hall of Fame and current user updates)
     const unsubUsers = onSnapshot(collection(db, 'users'), snapshot => {
       const cloudUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setUsers(cloudUsers);
+      
+      // Sync current user state if they are in the cloud list
+      if (user) {
+        const self = cloudUsers.find(u => u.id === user.id);
+        if (self) setUser(self);
+      }
     }, err => {
       import('./lib/firebase').then(({ handleFirestoreError, OperationType }) => {
         handleFirestoreError(err, OperationType.LIST, 'users');
@@ -120,13 +126,14 @@ export default function App() {
   };
 
   const onUserUpdate = async (updated: User) => {
-    if (!auth.currentUser) return;
+    const uid = auth.currentUser?.uid || user?.id;
+    if (!uid) return;
     setUser(updated);
     try {
-      await setDoc(doc(db, 'users', auth.currentUser.uid), updated, { merge: true });
+      await setDoc(doc(db, 'users', uid), updated, { merge: true });
     } catch (err) {
       const { handleFirestoreError, OperationType } = await import('./lib/firebase');
-      handleFirestoreError(err, OperationType.WRITE, `users/${auth.currentUser.uid}`);
+      handleFirestoreError(err, OperationType.WRITE, `users/${uid}`);
     }
   };
 
