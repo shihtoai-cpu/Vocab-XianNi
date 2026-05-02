@@ -77,36 +77,26 @@ export default function App() {
     };
   }, []);
 
-  // Use a separate effect for data that requires authentication
+  // Use a separate effect for data that can be public or shared
   useEffect(() => {
-    const unsubAuthLoad = onAuthStateChanged(auth, (authUser) => {
-      if (!authUser) {
-        setUsers([]);
-        return;
-      }
-
-      // Sync Users (for Hall of Fame and unique name check)
-      const unsubUsers = onSnapshot(collection(db, 'users'), snapshot => {
-        const cloudUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        setUsers(cloudUsers);
-        
-        // Sync current user state if they are in the cloud list
-        if (authUser.uid) {
-          const self = cloudUsers.find(u => u.id === authUser.uid);
-          if (self) {
-            setUser(self);
-          }
+    // Sync Users (for Hall of Fame, unique name check, and login selection)
+    const unsubUsers = onSnapshot(collection(db, 'users'), snapshot => {
+      const cloudUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      setUsers(cloudUsers);
+      
+      // Sync current user state if they are logged in and in the cloud list
+      const authUser = auth.currentUser;
+      if (authUser?.uid) {
+        const self = cloudUsers.find(u => u.id === authUser.uid);
+        if (self) {
+          setUser(self);
         }
-      }, err => {
-        import('./lib/firebase').then(({ handleFirestoreError, OperationType }) => {
-          handleFirestoreError(err, OperationType.LIST, 'users');
-        });
-      });
-
-      return () => unsubUsers();
+      }
+    }, err => {
+      console.warn("山門感應受阻 (Users fetch error):", err);
     });
 
-    return () => unsubAuthLoad();
+    return () => unsubUsers();
   }, []);
 
   const persistGlobal = async (changes: { words?: Word[]; batches?: Batch[]; settings?: AppSettings }) => {
