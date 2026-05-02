@@ -105,13 +105,13 @@ export default function HandwritingEngine({ word, zh, pos, onResult, onBack }: H
       />
       
       <div className="text-center space-y-4">
+        <p className="text-indigo-400 text-[10px] tracking-[0.5em] font-black uppercase">本尊古神修煉 · 神識刻印</p>
+        <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tighter max-w-2xl mx-auto drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">{zh}</h2>
         {pos && (
-          <div className="inline-block px-2 py-0.5 bg-blue-600/30 border border-blue-500/40 rounded text-[10px] font-black text-blue-300 uppercase tracking-widest mb-1">
+          <div className="mt-4 inline-block px-2 py-0.5 bg-blue-600/30 border border-blue-500/40 rounded text-[10px] font-black text-blue-300 uppercase tracking-widest">
             {pos}
           </div>
         )}
-        <p className="text-indigo-400 text-[10px] tracking-[0.5em] font-black uppercase">本尊古神修煉 · 神識刻印</p>
-        <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tighter max-w-2xl mx-auto drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">{zh}</h2>
       </div>
 
       <div className="w-full max-w-full px-2 py-10 relative">

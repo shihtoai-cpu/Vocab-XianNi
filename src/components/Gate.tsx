@@ -24,6 +24,7 @@ export default function Gate({ setView, setUser }: GateProps) {
   const [password, setPassword] = useState('');
   const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const NICKNAME_DOMAIN = "@xianni.auth";
 
@@ -53,7 +54,8 @@ export default function Gate({ setView, setUser }: GateProps) {
     } else if (err.code === 'auth/weak-password') {
       msg = "靈壓密碼力道不足，請強化密碼。";
     }
-    alert(msg);
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(null), 3000);
   };
 
   const checkUserExists = async (uid: string) => {
@@ -68,10 +70,17 @@ export default function Gate({ setView, setUser }: GateProps) {
 
   const handleNicknameAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     if (!nickname.trim() || !password) return;
     
-    if (nickname.length < 2) return alert("道號太短，難以凝聚靈識。");
-    if (password.length < 4) return alert("靈壓不足，密碼至少需要四位。");
+    if (nickname.length < 2) {
+      setErrorMsg("道號太短，難以凝聚靈識。");
+      return;
+    }
+    if (password.length < 4) {
+      setErrorMsg("靈壓不足，密碼至少需要四位。");
+      return;
+    }
 
     setLoading(true);
     const email = `${nickname.trim()}${NICKNAME_DOMAIN}`;
@@ -230,6 +239,16 @@ export default function Gate({ setView, setUser }: GateProps) {
                 />
               </div>
             </div>
+
+            {errorMsg && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-500/10 border border-red-500/30 p-3 rounded-xl text-red-500 text-[10px] font-bold text-center"
+              >
+                {errorMsg}
+              </motion.div>
+            )}
 
             <button 
               type="submit"

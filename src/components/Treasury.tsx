@@ -6,50 +6,55 @@
 import { useState } from 'react';
 import { Word, User, AppSettings, Batch } from '../types';
 import { Swords, Edit2, Trash2, X, Save } from 'lucide-react';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { useMemo } from 'react';
+import { mergeWords } from '../lib/wordUtils';
 
 interface TreasuryProps {
-  words: Word[];
+  words: Word[]; // Raw list
   user: User;
   settings: AppSettings;
   persistChanges: (changes: { words?: Word[]; batches?: Batch[]; settings?: AppSettings }) => Promise<void>;
 }
 
 export default function Treasury({ words, user, settings, persistChanges }: TreasuryProps) {
+  const mergedWords = useMemo(() => mergeWords(words), [words]);
   const [editingWord, setEditingWord] = useState<Word | null>(null);
   const [editForm, setEditForm] = useState<Partial<Word>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [adminPwInput, setAdminPwInput] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const startEdit = (w: Word) => {
     setEditingWord(w);
     setEditForm({ ...w });
     setAdminPwInput("");
     setErrorMessage(null);
+    setConfirmDelete(false);
+    setSuccessMsg(null);
   };
 
   const handleSave = async () => {
     if (!editingWord || !editForm.en || !editForm.zh) return;
 
     if (adminPwInput.trim() !== settings.adminPw) {
-      alert("主宰印信（密碼）有誤，法旨難成！");
-      setErrorMessage("密碼錯誤，請重新核對。");
+      setErrorMessage("主宰印信（密碼）有誤，法旨難成！");
       return;
     }
 
     setIsSaving(true);
     setErrorMessage(null);
-    const newWords = words.map(w => w.en === editingWord.en ? { ...w, ...editForm } as Word : w);
+    // When saving a merged word, we update all raw entries with the same English text
+    const newWords = words.map(w => w.en.toLowerCase() === editingWord.en.toLowerCase() ? { ...w, ...editForm } as Word : w);
     
     try {
       await persistChanges({ words: newWords });
-      alert("法旨已成，經文已重新封存。");
-      setEditingWord(null);
+      setSuccessMsg("法旨已成，經文已重新封存。");
+      setTimeout(() => setEditingWord(null), 1500);
     } catch (err) {
       console.error(err);
-      alert("天道（數據庫）響應失敗，請稍後再試。");
+      setErrorMessage("天道（數據庫）響應失敗，請稍後再試。");
     } finally {
       setIsSaving(false);
     }
@@ -59,24 +64,27 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
     if (!editingWord) return;
     
     if (adminPwInput.trim() !== settings.adminPw) {
-      alert("主宰印信（密碼）有誤，不可隨意焚毀仙卷！");
-      setErrorMessage("密碼錯誤。");
+      setErrorMessage("主宰印信（密碼）有誤，不可隨意焚毀仙卷！");
       return;
     }
 
-    if (!confirm(`確定要將經文「${editingWord.en}」永久焚毀？此舉不可逆轉。`)) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
 
     setIsSaving(true);
     setErrorMessage(null);
-    const newWords = words.filter(w => w.en !== editingWord.en);
+    // Deleting a merged word removes all raw entries for that English text
+    const newWords = words.filter(w => w.en.toLowerCase() !== editingWord.en.toLowerCase());
     
     try {
       await persistChanges({ words: newWords });
-      alert("焚毀成功，此經文已從世間消逝。");
-      setEditingWord(null);
+      setSuccessMsg("焚毀成功，此經文已從世間消逝。");
+      setTimeout(() => setEditingWord(null), 1500);
     } catch (err) {
       console.error(err);
-      alert("焚毀失敗，通天塔受阻（雲端寫入逾時）。");
+      setErrorMessage("焚毀失敗，通天塔受阻（雲端寫入逾時）。");
     } finally {
       setIsSaving(false);
     }
@@ -87,7 +95,7 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
       <div className="flex justify-between items-end py-4">
         <div>
           <h2 className="text-3xl font-bold text-white">萬寶閣</h2>
-          <p className="text-[10px] text-slate-500 tracking-[0.3em] font-bold uppercase">目前收納經文: {words.length} 卷</p>
+          <p className="text-[10px] text-slate-500 tracking-[0.3em] font-bold uppercase">目前收納經文: {mergedWords.length} 卷</p>
         </div>
         <Swords className="text-indigo-500 w-8 h-8 opacity-50" />
       </div>
@@ -113,7 +121,7 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {words.map((w, i) => {
+        {mergedWords.map((w, i) => {
           const stats = user.stats.wordHistory?.[w.en] || { c: 0, w: 0 };
           const isMastered = (user.stats.wordStats?.[w.en] || 0) >= 50; 
           
@@ -152,6 +160,7 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
 
               <h4 className={`font-bold text-base tracking-tight ${stats.c > 0 || stats.w > 0 ? 'text-white' : 'text-slate-500'}`}>{w.en}</h4>
               <p className={`text-[10px] tracking-tighter mt-0.5 font-medium ${textColor}`}>{w.zh}</p>
+              <p className="text-[9px] text-indigo-400/60 font-black mt-1 uppercase tracking-tighter">{w.pos}</p>
               
               {(stats.c > 0 || stats.w > 0) && (
                 <div className="mt-2.5 flex items-center space-x-2 text-[7px] font-black tracking-widest uppercase opacity-60">
@@ -214,16 +223,20 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
                     type="password" 
                     placeholder="輸入密碼以施行法旨"
                     value={adminPwInput} 
-                    onChange={e => setAdminPwInput(e.target.value)}
+                    onChange={e => {
+                      setAdminPwInput(e.target.value);
+                      setErrorMessage(null);
+                    }}
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:border-indigo-500 outline-none transition-all placeholder:text-slate-800"
                   />
                   {errorMessage && <p className="text-[10px] text-red-500 font-black animate-pulse mt-1">{errorMessage}</p>}
+                  {successMsg && <p className="text-[10px] text-emerald-500 font-black animate-bounce mt-1 text-center">{successMsg}</p>}
                 </div>
               </div>
 
               <div className="pt-2 flex flex-col gap-3">
                 <button 
-                  disabled={isSaving}
+                  disabled={isSaving || !!successMsg}
                   onClick={handleSave}
                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50"
                 >
@@ -231,20 +244,23 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
                   <span>封存變更</span>
                 </button>
                 <button 
-                  disabled={isSaving}
+                  disabled={isSaving || !!successMsg}
                   onClick={handleDelete}
-                  className="w-full bg-red-950/20 border border-red-900/30 text-red-500 font-bold py-3 rounded-lg flex items-center justify-center space-x-2 transition-all hover:bg-red-950/40"
+                  className={`w-full font-bold py-3 rounded-lg flex items-center justify-center space-x-2 transition-all active:scale-95 ${confirmDelete ? 'bg-red-600 text-white animate-pulse' : 'bg-red-950/20 border border-red-900/30 text-red-500 hover:bg-red-950/40'}`}
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span>焚毀此卷</span>
+                  <span>{confirmDelete ? '確認焚毀（不可逆）' : '焚毀此卷'}</span>
                 </button>
+                {confirmDelete && !successMsg && (
+                  <button onClick={() => setConfirmDelete(false)} className="text-[10px] text-slate-500 text-center font-bold uppercase tracking-widest">取消</button>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {words.length === 0 && (
+      {mergedWords.length === 0 && (
         <div className="text-center py-20 text-slate-600 italic">
           目前閣中空無一物，請主宰前往主宰殿匯入經書。
         </div>

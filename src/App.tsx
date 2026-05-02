@@ -8,6 +8,7 @@ import { collection, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore'
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { db, auth } from './lib/firebase';
 import { User, Word, Batch, AppSettings } from './types';
+import { mergeWords } from './lib/wordUtils';
 import Gate from './components/Gate';
 import Register from './components/Register';
 import Lobby from './components/Lobby';
@@ -19,6 +20,7 @@ import ReverseTrain from './components/ReverseTrain';
 import Admin from './components/Admin';
 import { LayoutGroup, motion, AnimatePresence } from 'motion/react';
 import { Home, Trophy, Swords } from 'lucide-react';
+import { useMemo } from 'react';
 
 export default function App() {
   const [view, setView] = useState<'gate' | 'reg' | 'lobby' | 'trial' | 'train' | 'reverse_train' | 'admin'>('gate');
@@ -29,6 +31,8 @@ export default function App() {
   const [words, setWords] = useState<Word[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [settings, setSettings] = useState<AppSettings>({ rounds: 3, questions: 10, errors: 3, adminPw: "123456" });
+
+  const mergedWords = useMemo(() => mergeWords(words), [words]);
 
   useEffect(() => {
     // Auth Listener
@@ -85,9 +89,13 @@ export default function App() {
       setUsers(cloudUsers);
       
       // Sync current user state if they are in the cloud list
-      if (user) {
-        const self = cloudUsers.find(u => u.id === user.id);
-        if (self) setUser(self);
+      const myUid = auth.currentUser?.uid;
+      if (myUid) {
+        const self = cloudUsers.find(u => u.id === myUid);
+        if (self) {
+          // Compare to prevent feedback loops if needed, but usually onSnapshot is fine
+          setUser(self);
+        }
       }
     }, err => {
       import('./lib/firebase').then(({ handleFirestoreError, OperationType }) => {
@@ -183,7 +191,7 @@ export default function App() {
                   <AnimatePresence mode="wait">
                     {tab === 'home' && (
                       <motion.div key="home" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="h-full">
-                        <Lobby user={user!} settings={settings} words={words} setView={setView} onLogout={handleLogout} onUpdate={onUserUpdate} />
+                        <Lobby user={user!} settings={settings} words={mergedWords} setView={setView} onLogout={handleLogout} onUpdate={onUserUpdate} />
                       </motion.div>
                     )}
                     {tab === 'hall' && (
@@ -193,7 +201,7 @@ export default function App() {
                     )}
                     {tab === 'store' && (
                       <motion.div key="store" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="h-full">
-                        <Treasury words={words} user={user!} settings={settings} persistChanges={persistGlobal} />
+                        <Treasury words={mergedWords} user={user!} settings={settings} persistChanges={persistGlobal} />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -216,17 +224,17 @@ export default function App() {
             )}
             {view === 'trial' && (
               <motion.div key="trial" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex-1 flex flex-col">
-                <Trial user={user!} settings={settings} words={words} onUpdate={onUserUpdate} setView={setView} />
+                <Trial user={user!} settings={settings} words={mergedWords} onUpdate={onUserUpdate} setView={setView} />
               </motion.div>
             )}
             {view === 'train' && (
               <motion.div key="train" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex-1 flex flex-col">
-                <Training user={user!} words={words} onUpdate={onUserUpdate} setView={setView} />
+                <Training user={user!} words={mergedWords} onUpdate={onUserUpdate} setView={setView} />
               </motion.div>
             )}
             {view === 'reverse_train' && (
               <motion.div key="reverse" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex-1 flex flex-col">
-                <ReverseTrain words={words} user={user!} onUpdate={onUserUpdate} setView={setView} />
+                <ReverseTrain words={mergedWords} user={user!} onUpdate={onUserUpdate} setView={setView} />
               </motion.div>
             )}
             {view === 'admin' && (

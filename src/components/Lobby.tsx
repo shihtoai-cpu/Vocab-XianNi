@@ -20,6 +20,7 @@ interface LobbyProps {
 
 export default function Lobby({ user, settings, words, setView, onLogout, onUpdate }: LobbyProps) {
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
+  const [modal, setModal] = useState<{ type: 'confirm' | 'alert'; msg: string; onConfirm?: () => void } | null>(null);
   const [tempAvatar, setTempAvatar] = useState(user.avatar);
   const [tempSize, setTempSize] = useState(user.avatarSize || 192);
   const [tempX, setTempX] = useState(user.avatarX || 0);
@@ -34,13 +35,17 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
   const canRebirth = ancient.n === "九星古神";
 
   const handleRebirth = () => {
-    if (!confirm("確定要涅槃重修嗎？一身修為將歸還天地，但閣下將獲得更高階的修士之證，轉世重啟！")) return;
-    
-    onUpdate({
-      ...user,
-      exp: 0,
-      ancientExp: 0,
-      rotations: (user.rotations || 0) + 1
+    setModal({
+      type: 'confirm',
+      msg: "確定要涅槃重修嗎？一身修為將歸還天地，但閣下將獲得更高階的修士之證，轉世重啟！",
+      onConfirm: () => {
+        onUpdate({
+          ...user,
+          exp: 0,
+          ancientExp: 0,
+          rotations: (user.rotations || 0) + 1
+        });
+      }
     });
   };
 
@@ -72,7 +77,36 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
   }, []);
 
   return (
-    <div className="p-6 flex flex-col h-screen space-y-6 pb-24 overflow-y-auto scrollbar-hide">
+    <div className="p-6 flex flex-col h-screen space-y-6 pb-24 overflow-y-auto scrollbar-hide relative">
+      {/* Custom Modal */}
+      {modal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/60 animate-in fade-in duration-200">
+          <div className="w-full max-w-xs glass border border-white/10 rounded-3xl p-8 space-y-6 shadow-2xl text-center">
+            <div className="flex justify-center">
+                <div className="w-12 h-12 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-400">
+                    <Sparkles size={24} />
+                </div>
+            </div>
+            <p className="text-slate-300 text-sm font-bold leading-relaxed">{modal.msg}</p>
+            <div className="flex gap-3">
+                <button 
+                  onClick={() => {
+                    modal.onConfirm?.();
+                    setModal(null);
+                  }}
+                  className="flex-1 bg-indigo-600 py-3 rounded-xl text-white text-xs font-black uppercase tracking-widest hover:bg-indigo-500 transition-all pointer-events-auto"
+                >
+                  確認
+                </button>
+                {modal.type === 'confirm' && (
+                  <button onClick={() => setModal(null)} className="flex-1 bg-white/5 py-3 rounded-xl text-slate-400 text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all pointer-events-auto">
+                    取消
+                  </button>
+                )}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Avatar Editor Modal */}
       {isEditingAvatar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl">
@@ -373,7 +407,7 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
           <div 
             onClick={() => {
               if (user.stats.rounds >= settings.rounds) {
-                alert("今日道感已圓滿，欲速則不達。請明朝再會！");
+                setModal({ type: 'alert', msg: "今日道感已圓滿，欲速則不達。請明朝再會！" });
                 return;
               }
               setView('trial');

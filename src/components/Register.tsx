@@ -41,9 +41,9 @@ export default function Register({ onBack, onDone }: RegisterProps) {
   }, []);
 
   const handleRegister = () => {
-    if (n) {
+    if (n.trim()) {
       onDone({ 
-        name: n, 
+        name: n.trim(), 
         pw: '', // Not used with Google Auth
         avatar: a, 
         exp: 0, 
@@ -56,8 +56,6 @@ export default function Register({ onBack, onDone }: RegisterProps) {
           wordHistory: {}
         }
       });
-    } else {
-      alert("道號不可為空！");
     }
   };
 

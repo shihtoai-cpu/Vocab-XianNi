@@ -42,18 +42,20 @@ export const getRealmInfo = (exp: number): RealmInfo => {
         let req = 0;
         
         if (i < bridgeIndex) {
-            // Early stages: Linear growth, very smooth.
-            // Base 500, adding 100 per level. 
-            // Total XP for ~100 early levels will be around 50k-70k.
-            req = 500 + (i * 100);
+            // Early stages: Very smooth progression.
+            // Level 0: 100 XP
+            // Level 60: 100 + 60*20 = 1300 XP
+            // This ensures characters reach high levels (空劫) with ~50k-70k XP.
+            req = 100 + (i * 20);
         } else if (ALL_SUB[i].m === "半步踏天") {
-            // Bridges: Significant climb.
-            // 8 bridges * 15k = 120k.
-            // Total XP to clear bridges ~120k.
-            req = 15000; 
+            // Bridges: The real challenge starts here.
+            // 8 bridges * 12k = 96k XP.
+            // Total word count target 8000-10000. 
+            // Total available XP in game ~150k-200k.
+            req = 12000; 
         } else {
-            // 踏天境 Rotations (二轉, etc.)
-            req = 50000 + ((i - bridgeIndex) * 20000);
+            // 踏天境 Rotations (二轉, etc.) - Eternal progression
+            req = 30000 + ((i - bridgeIndex) * 10000);
         }
 
         if (exp < acc + req) return { ...ALL_SUB[i], idx: i, current: acc, next: acc + req };

@@ -36,6 +36,34 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
+  // Custom Modal State
+  const [modal, setModal] = useState<{
+    show: boolean;
+    title: string;
+    msg: string;
+    value?: string;
+    type: 'prompt' | 'confirm' | 'alert';
+    onConfirm: (val?: string) => void;
+  }>({
+    show: false,
+    title: "",
+    msg: "",
+    type: 'alert',
+    onConfirm: () => {}
+  });
+
+  const showPrompt = (title: string, msg: string, initial: string, onConfirm: (v: string) => void) => {
+    setModal({ show: true, title, msg, value: initial, type: 'prompt', onConfirm: (v) => onConfirm(v || "") });
+  };
+
+  const showConfirm = (title: string, msg: string, onConfirm: () => void) => {
+    setModal({ show: true, title, msg, type: 'confirm', onConfirm: () => onConfirm() });
+  };
+
+  const showAlert = (title: string, msg: string) => {
+    setModal({ show: true, title, msg, type: 'alert', onConfirm: () => {} });
+  };
+
   const handleCSV = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -53,20 +81,10 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
         return { en, pos, zh, cat: autoCategorize(zh), bid };
       }).filter((x): x is Word => x !== null);
 
-      const nw = [...localWords];
-      news.forEach(n => {
-        const i = nw.findIndex(w => w.en.toLowerCase() === n.en.toLowerCase());
-        if (i !== -1) { 
-          if(!nw[i].zh.includes(n.zh)) nw[i].zh += `; ${n.zh}`; 
-        } else {
-          nw.push(n);
-        }
-      });
-
-      setLocalWords(nw);
+      setLocalWords([...localWords, ...news]);
       const newBatches = [...localBatches, { id: bid, d: new Date().toLocaleString(), c: news.length }];
       setLocalBatches(newBatches);
-      alert("仙冊經文匯入成功！記得後續點擊『封存法旨』以確保存檔。");
+      showAlert("系統提示", "仙冊經文匯入成功！記得後續點擊『封存法旨』以確保存檔。");
     };
     r.readAsText(f);
   };
@@ -81,17 +99,56 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
         className="w-full bg-slate-950 border border-slate-800 p-4 rounded text-center focus:border-indigo-500 outline-none text-2xl text-white font-mono" 
         value={pw} 
         onChange={e => setPw(e.target.value)} 
-        onKeyUp={e => e.key === 'Enter' && (pw === localSettings.adminPw ? setAuth(true) : alert("密碼錯誤"))} 
+        onKeyUp={e => e.key === 'Enter' && (pw === localSettings.adminPw ? setAuth(true) : showAlert("禁制回饋", "密碼錯誤"))} 
       />
-      <button onClick={() => pw === localSettings.adminPw ? setAuth(true) : alert("密碼錯誤")} className="w-full py-4 btn-gold text-lg tracking-widest">解開禁制</button>
+      <button onClick={() => pw === localSettings.adminPw ? setAuth(true) : showAlert("禁制回饋", "密碼錯誤")} className="w-full py-4 btn-gold text-lg tracking-widest">解開禁制</button>
       <button onClick={() => setView('lobby')} className="text-slate-600 font-bold text-[10px] uppercase tracking-[0.5em]">返回洞府</button>
     </div>
   );
 
   return (
     <div className="p-6 flex flex-col space-y-8 overflow-y-auto h-screen pb-24 scrollbar-hide">
+      {/* Custom Modal Rendering */}
+      {modal.show && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-sm bg-black/60 animate-in fade-in duration-200">
+          <div className="w-full max-w-xs glass border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl scale-in-center">
+            <h4 className="text-sm font-bold text-indigo-400 uppercase tracking-widest border-b border-white/5 pb-2">{modal.title}</h4>
+            <p className="text-slate-300 text-xs leading-relaxed">{modal.msg}</p>
+            
+            {modal.type === 'prompt' && (
+              <input 
+                type="text" 
+                autoFocus
+                className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white text-sm outline-none focus:border-indigo-500"
+                value={modal.value}
+                onChange={e => setModal({...modal, value: e.target.value})}
+              />
+            )}
+
+            <div className="flex space-x-2 pt-2">
+              <button 
+                onClick={() => {
+                  modal.onConfirm(modal.value);
+                  setModal({...modal, show: false});
+                }}
+                className="flex-1 bg-indigo-600 py-2 rounded-lg text-white text-xs font-bold hover:bg-indigo-500 transition-all"
+              >
+                {modal.type === 'alert' ? '知曉了' : '確認'}
+              </button>
+              {modal.type !== 'alert' && (
+                <button 
+                  onClick={() => setModal({...modal, show: false})}
+                  className="flex-1 bg-white/5 py-2 rounded-lg text-slate-400 text-xs font-bold hover:bg-white/10 transition-all"
+                >
+                  取消
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex justify-between items-center mt-4">
-        <h2 className="text-xl font-bold text-white tracking-tight uppercase">主宰殿 <span className="text-[10px] text-indigo-500 font-mono">SOVEREIGN_PALACE</span></h2>
+        <h2 className="text-xl font-bold text-white tracking-tight uppercase">主宰殿</h2>
         <button onClick={() => setView('lobby')} className="p-2 glass rounded text-slate-500 hover:text-white"><X size={18} /></button>
       </div>
       
@@ -149,61 +206,67 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
                   <div className="flex items-center space-x-2">
                     <p className="text-sm font-bold text-white uppercase tracking-tight">{u.name}</p>
                     <button 
-                      onClick={async () => {
-                        const newName = prompt("更易修士道號", u.name);
-                        if (newName && newName !== u.name) {
-                          if (u.id) {
-                            await updateDoc(doc(db, 'users', u.id), { name: newName });
+                      onClick={() => {
+                        showPrompt("更名法旨", "請輸入新修士道號：", u.name, async (newName) => {
+                          if (newName && newName !== u.name) {
+                            if (u.id) {
+                              await updateDoc(doc(db, 'users', u.id), { name: newName });
+                            }
+                            const newList = [...localUsers];
+                            newList[i].name = newName;
+                            setLocalUsers(newList);
+                            persistUsers(newList);
                           }
-                          const newList = [...localUsers];
-                          newList[i].name = newName;
-                          setLocalUsers(newList);
-                          persistUsers(newList);
-                        }
+                        });
                       }}
                       className="text-[8px] text-indigo-400 border border-indigo-400/30 px-1 rounded hover:bg-indigo-400 hover:text-white transition-all uppercase"
                     >
                       更名
                     </button>
                   </div>
-                  <p className="text-[9px] text-slate-500 font-mono">UID: {u.id?.slice(0, 8)}... | EXP: {u.exp}</p>
+                  <p className="text-[9px] text-slate-500 font-mono">修為: {u.exp}</p>
                   {u.recoveryPw && <p className="text-[9px] text-emerald-500 font-bold">主宰重設密碼: {u.recoveryPw}</p>}
                 </div>
               </div>
               
               <div className="grid grid-cols-3 gap-2 mt-4">
-                <button onClick={async () => {
-                  const e = prompt("調整修士積分", u.exp.toString());
-                  if (e !== null && u.id) {
-                    const newExp = parseInt(e);
-                    await updateDoc(doc(db, 'users', u.id), { exp: newExp });
-                    const newList = localUsers.map(x => x.id === u.id ? {...x, exp: newExp} : x);
-                    setLocalUsers(newList);
-                    persistUsers(newList);
-                    // Snappy update if editing self
-                    if (curUser && curUser.id === u.id) {
-                      setCurUser({...curUser, exp: newExp});
+                <button onClick={() => {
+                  showPrompt("修為調整", `請輸入修士 ${u.name} 的新修為點數：`, u.exp.toString(), async (e) => {
+                    if (e !== "" && u.id) {
+                      const newExp = parseInt(e);
+                      if (isNaN(newExp)) return showAlert("法力偏差", "輸入之數非靈氣之量（請輸入數字）");
+                      await updateDoc(doc(db, 'users', u.id), { exp: newExp });
+                      const newList = localUsers.map(x => x.id === u.id ? {...x, exp: newExp} : x);
+                      setLocalUsers(newList);
+                      persistUsers(newList);
+                      // Snappy update if editing self
+                      if (curUser && curUser.id === u.id) {
+                        setCurUser({...curUser, exp: newExp});
+                      }
                     }
-                  }
+                  });
                 }} className="text-[9px] bg-slate-950 p-2 rounded border border-slate-800 text-slate-400 font-bold uppercase hover:text-white">調整修為</button>
 
-                <button onClick={async () => {
-                  const newPw = prompt("為主宰設置此修士的臨時登入密碼 (留空則取消)", u.recoveryPw || "");
-                  if (newPw !== null && u.id) {
-                    await updateDoc(doc(db, 'users', u.id), { recoveryPw: newPw || null });
-                    const newList = [...localUsers];
-                    newList[i].recoveryPw = newPw || undefined;
-                    setLocalUsers(newList);
-                    persistUsers(newList);
-                  }
+                <button onClick={() => {
+                  showPrompt("密碼重設", "為主宰設置此修士的臨時登入密碼 (留空則取消)：", u.recoveryPw || "", async (newPw) => {
+                    if (u.id) {
+                      await updateDoc(doc(db, 'users', u.id), { recoveryPw: newPw || null });
+                      const newList = [...localUsers];
+                      newList[i].recoveryPw = newPw || undefined;
+                      setLocalUsers(newList);
+                      persistUsers(newList);
+                    }
+                  });
                 }} className="text-[9px] bg-slate-950 p-2 rounded border border-slate-800 text-emerald-500 font-bold uppercase hover:bg-emerald-950/20">設置密碼</button>
 
-                <button onClick={async () => {
-                  if (u.id && confirm(`確定要將修士 ${u.name} 逐出仙門？`)) {
-                    await deleteDoc(doc(db, 'users', u.id));
-                    const newList = localUsers.filter(x => x.id !== u.id);
-                    setLocalUsers(newList);
-                    persistUsers(newList);
+                <button onClick={() => {
+                  if (u.id) {
+                    showConfirm("逐出仙門", `確定要將修士 ${u.name} 逐出仙門？此舉將抹除其所有修行痕跡。`, async () => {
+                      await deleteDoc(doc(db, 'users', u.id!));
+                      const newList = localUsers.filter(x => x.id !== u.id);
+                      setLocalUsers(newList);
+                      persistUsers(newList);
+                    });
                   }
                 }} className="text-[9px] bg-red-950/20 text-red-500 p-2 rounded border border-red-900/30 font-bold uppercase">逐出仙門</button>
               </div>
@@ -226,21 +289,21 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
             <div className="flex items-center space-x-2">
               <span className="text-[9px] text-red-500 animate-pulse font-bold">確定焚毀？</span>
               <button 
-                onClick={async () => {
-                  if (!confirm("確定要將所有經文焚毀？此舉將令萬寶閣徹底清空。")) return;
-                  
-                  setSaving(true);
-                  try {
-                    await persistGlobal({ words: [], batches: [] });
-                    setLocalWords([]);
-                    setLocalBatches([]);
-                    setConfirmDeleteAll(false);
-                    alert("萬物皆空，仙冊已焚。");
-                  } catch (err) {
-                    alert("天道崩塌（同步失敗）。");
-                  } finally {
-                    setSaving(false);
-                  }
+                onClick={() => {
+                  showConfirm("焚毀全卷", "確定要將所有經文焚毀？此舉將令萬寶閣徹底清空，所有修行資糧將灰飛煙滅。", async () => {
+                    setSaving(true);
+                    try {
+                      await persistGlobal({ words: [], batches: [] });
+                      setLocalWords([]);
+                      setLocalBatches([]);
+                      setConfirmDeleteAll(false);
+                      showAlert("法旨達成", "萬物皆空，仙冊已焚。");
+                    } catch (err) {
+                      showAlert("天道崩塌", "同步失敗，請稍後再試。");
+                    } finally {
+                      setSaving(false);
+                    }
+                  });
                 }}
                 className="bg-red-600 px-2 py-0.5 rounded text-white text-[9px] font-bold"
               >
@@ -270,23 +333,23 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
               ) : (
                 <div className="flex items-center space-x-2">
                   <button 
-                    onClick={async () => {
-                      if (!confirm(`確定要將此卷「${b.d}」永久焚毀？`)) return;
-                      
-                      const newWords = localWords.filter(w => w.bid !== b.id);
-                      const newBatches = localBatches.filter(x => x.id !== b.id);
-                      
-                      setSaving(true);
-                      try {
-                        await persistGlobal({ words: newWords, batches: newBatches });
-                        setLocalWords(newWords);
-                        setLocalBatches(newBatches);
-                        setConfirmDeleteId(null);
-                      } catch (err) {
-                        alert("通天塔受阻（寫入失敗）。");
-                      } finally {
-                        setSaving(false);
-                      }
+                    onClick={() => {
+                      showConfirm("焚毀仙卷", `確定要將此卷「${b.d}」永久焚毀？`, async () => {
+                        const newWords = localWords.filter(w => w.bid !== b.id);
+                        const newBatches = localBatches.filter(x => x.id !== b.id);
+                        
+                        setSaving(true);
+                        try {
+                          await persistGlobal({ words: newWords, batches: newBatches });
+                          setLocalWords(newWords);
+                          setLocalBatches(newBatches);
+                          setConfirmDeleteId(null);
+                        } catch (err) {
+                          showAlert("封存失敗", "通天塔受阻（雲端同步失敗）。");
+                        } finally {
+                          setSaving(false);
+                        }
+                      });
                     }}
                     className="bg-red-600 px-2 py-0.5 rounded text-white text-[9px] font-bold"
                   >
@@ -322,11 +385,11 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
                 const updatedSelf = localUsers.find(u => u.id === curUser.id);
                 if (updatedSelf) setCurUser(updatedSelf!);
               }
-              alert("主宰法旨已封存！(仙冊經文已歸檔成功)");
+              showAlert("法旨封存", "主宰法旨已封存！(仙冊經文已歸檔成功)");
               setView('lobby');
             } catch (err: any) {
               console.error(err);
-              alert("封存失敗：權限不足。");
+              showAlert("封存失敗", "天道法則拒絕了您的變更，請核對權限或連線。");
             } finally {
               setSaving(false);
             }
