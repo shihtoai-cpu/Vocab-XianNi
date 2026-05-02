@@ -14,6 +14,7 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Required to be a PWA: handle fetch events
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);
