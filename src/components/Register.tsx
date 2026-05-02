@@ -111,7 +111,7 @@ export default function Register({ onBack, onDone }: RegisterProps) {
           <Sparkles size={20} />
           <span>確認入冊</span>
         </button>
-        <p className="text-[10px] text-slate-600 text-center mt-6 italic">
+        <p className="text-[10px] text-slate-600 text-center mt-6">
           「一入修真深似海，從此凡塵是路人。」
         </p>
       </div>

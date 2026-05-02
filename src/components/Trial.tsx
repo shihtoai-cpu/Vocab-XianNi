@@ -138,7 +138,7 @@ export default function Trial({ user, settings, words, onUpdate, setView }: Tria
         </div>
       )}
       <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-slate-500 italic font-bold">正在感應試煉陣法...</p>
+      <p className="text-slate-500 font-bold">正在感應試煉陣法...</p>
       {words.length === 0 && (
         <div className="space-y-4 pt-4">
           <p className="text-amber-500 text-xs">仙冊空虛，無經書可練</p>

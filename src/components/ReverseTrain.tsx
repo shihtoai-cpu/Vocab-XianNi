@@ -43,7 +43,7 @@ export default function ReverseTrain({ words, user, onUpdate, setView }: Reverse
   if (!shuffled || shuffled.length === 0) return (
     <div className="p-10 text-white text-center flex flex-col items-center justify-center h-screen space-y-4 bg-slate-950">
       <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-slate-500 italic font-bold">神識感應陣法中...</p>
+      <p className="text-slate-500 font-bold">神識感應陣法中...</p>
       {(!words || words.length === 0) && (
         <div className="space-y-4 pt-4">
           <p className="text-amber-500 text-xs">仙冊空虛，無經書可練</p>

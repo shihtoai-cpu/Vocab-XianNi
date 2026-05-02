@@ -160,7 +160,7 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
 
               <h4 className={`font-bold text-base tracking-tight ${stats.c > 0 || stats.w > 0 ? 'text-white' : 'text-slate-500'}`}>{w.en}</h4>
               <p className={`text-[10px] tracking-tighter mt-0.5 font-medium ${textColor}`}>{w.zh}</p>
-              <p className="text-[9px] text-indigo-400/60 font-black mt-1 uppercase tracking-tighter">{w.pos}</p>
+              <p className="text-[11px] text-indigo-400/70 font-black mt-1.5 uppercase tracking-tighter">{w.pos}</p>
               
               {(stats.c > 0 || stats.w > 0) && (
                 <div className="mt-2.5 flex items-center space-x-2 text-[7px] font-black tracking-widest uppercase opacity-60">
@@ -261,7 +261,7 @@ export default function Treasury({ words, user, settings, persistChanges }: Trea
       )}
 
       {mergedWords.length === 0 && (
-        <div className="text-center py-20 text-slate-600 italic">
+        <div className="text-center py-20 text-slate-600">
           目前閣中空無一物，請主宰前往主宰殿匯入經書。
         </div>
       )}

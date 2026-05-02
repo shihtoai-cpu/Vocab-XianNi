@@ -15,6 +15,7 @@ import Lobby from './components/Lobby';
 import HallOfFame from './components/HallOfFame';
 import Treasury from './components/Treasury';
 import Trial from './components/Trial';
+import ClozeTrial from './components/ClozeTrial';
 import Training from './components/Training';
 import ReverseTrain from './components/ReverseTrain';
 import Admin from './components/Admin';
@@ -23,7 +24,7 @@ import { Home, Trophy, Swords } from 'lucide-react';
 import { useMemo } from 'react';
 
 export default function App() {
-  const [view, setView] = useState<'gate' | 'reg' | 'lobby' | 'trial' | 'train' | 'reverse_train' | 'admin'>('gate');
+  const [view, setView] = useState<'gate' | 'reg' | 'lobby' | 'trial' | 'cloze_trial' | 'train' | 'reverse_train' | 'admin'>('gate');
   const [tab, setTab] = useState<'home' | 'hall' | 'store'>('home');
   const [authReady, setAuthReady] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
@@ -225,6 +226,11 @@ export default function App() {
             {view === 'trial' && (
               <motion.div key="trial" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex-1 flex flex-col">
                 <Trial user={user!} settings={settings} words={mergedWords} onUpdate={onUserUpdate} setView={setView} />
+              </motion.div>
+            )}
+            {view === 'cloze_trial' && (
+              <motion.div key="cloze" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex-1 flex flex-col">
+                <ClozeTrial user={user!} words={mergedWords} settings={settings} onUpdate={onUserUpdate} setView={setView} />
               </motion.div>
             )}
             {view === 'train' && (

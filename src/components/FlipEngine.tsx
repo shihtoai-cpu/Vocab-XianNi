@@ -86,7 +86,7 @@ export default function FlipEngine({ word, zh, pos, onResult, onBack }: FlipEngi
                   <h2 className="text-5xl font-black text-slate-500 mb-4 tracking-tighter opacity-50">{word}</h2>
                   <div className="h-px bg-slate-800 w-full my-6"></div>
                   <h3 className="text-3xl font-bold text-white mt-2">{zh}</h3>
-                  <div className="mt-2 inline-block px-2 py-0.5 bg-blue-600/30 border border-blue-500/40 rounded text-[10px] font-black text-blue-300 uppercase tracking-widest">
+                  <div className="mt-4 inline-block px-3 py-1 bg-blue-600/30 border border-blue-500/40 rounded text-sm font-black text-blue-300 uppercase tracking-widest">
                     {pos}
                   </div>
                 </div>

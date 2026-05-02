@@ -48,7 +48,7 @@ export default function HallOfFame({ users }: HallOfFameProps) {
                 <h4 className="font-bold text-white text-lg flex items-center gap-2">
                   {u.name}
                   {(u.rotations || 0) > 0 && (
-                    <span className="text-[9px] bg-red-600/20 text-red-400 border border-red-500/30 px-1 py-0.5 rounded italic font-black">
+                    <span className="text-[9px] bg-red-600/20 text-red-400 border border-red-500/30 px-1 py-0.5 rounded font-black">
                       {u.rotations}轉
                     </span>
                   )}

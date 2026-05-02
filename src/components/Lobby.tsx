@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { User, AppSettings, Word } from '../types';
 import { getRealmInfo, getAncientRealm, getMasteredPrefix, ANCIENT_REALMS } from '../constants';
-import { ShieldCheck, Camera, Sword, RotateCcw, Zap, ChevronRight, LogOut, Sparkles, Move, Maximize, X, Check } from 'lucide-react';
+import { ShieldCheck, Camera, Sword, RotateCcw, Zap, ChevronRight, LogOut, Sparkles, Move, Maximize, X, Check, Scroll } from 'lucide-react';
 
 interface LobbyProps {
   user: User;
@@ -270,7 +270,7 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
             <h2 className="text-2xl font-black text-white flex items-center gap-2 tracking-tight">
               {user.name}
               {(user.rotations || 0) > 0 && (
-                <span className="text-[10px] bg-red-600/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full italic font-black">
+                <span className="text-[10px] bg-red-600/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full font-black">
                   {user.rotations} 轉
                 </span>
               )}
@@ -298,7 +298,7 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
           <div className="bar-container h-2 bg-slate-950/50">
             <div className="bar-fill bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.4)]" style={{ width: `${Math.min(100, prog)}%` }}></div>
           </div>
-          <p className="text-[9px] text-right text-slate-600 font-bold italic tracking-tighter">突破尚需 {info.next - user.exp} 靈氣提升</p>
+          <p className="text-[9px] text-right text-slate-600 font-bold tracking-tighter">突破尚需 {info.next - user.exp} 靈氣提升</p>
         </div>
 
         {/* 本尊進度 */}
@@ -333,7 +333,7 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
                     <div className="bar-container h-2 bg-slate-900 border border-white/5">
                       <div className={`bar-fill transition-all duration-1000 ${ptsReached ? 'bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.6)]' : 'bg-slate-700'}`} style={{ width: `${ptsProg}%` }}></div>
                     </div>
-                    <p className={`text-[9px] text-right font-black italic tracking-tighter ${ptsReached ? 'text-emerald-500/60' : 'text-rose-500/60'}`}>
+                    <p className={`text-[9px] text-right font-black tracking-tighter ${ptsReached ? 'text-emerald-500/60' : 'text-rose-500/60'}`}>
                       {ptsReached ? '【神識契合已達標】' : `距離晉升門檻還差 ${Math.max(0, nextAncient.pts - (user.ancientExp || 0))} 點神識`}
                     </p>
                   </div>
@@ -352,7 +352,7 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
                     <div className="bar-container h-2 bg-slate-900 border border-white/5">
                       <div className={`bar-fill transition-all duration-1000 ${masteredReached ? 'bg-violet-600 shadow-[0_0_15px_rgba(139,92,246,0.6)]' : 'bg-slate-700'}`} style={{ width: `${masterProg}%` }}></div>
                     </div>
-                    <div className="flex justify-between items-center text-[9px] font-black italic tracking-tighter">
+                    <div className="flex justify-between items-center text-[9px] font-black tracking-tighter">
                       <span className="text-slate-700">（註：練習單字達 50 分即算熟練）</span>
                       <span className={masteredReached ? 'text-emerald-500/60' : 'text-rose-500/60'}>
                         {masteredReached ? '【刻印圓滿】' : `尚需精熟 ${Math.max(0, nextAncient.masteredReq - masteredCount)} 個字方可突破`}
@@ -449,6 +449,23 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
             </div>
           </div>
           <ChevronRight className="text-slate-700 mr-2" />
+        </div>
+
+        <div 
+          onClick={() => setView('cloze_trial')} 
+          className="glass p-5 rounded flex items-center justify-between cursor-pointer hover:border-violet-500/50 transition-all active:scale-[0.98] bg-violet-950/5 border border-violet-500/10"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-violet-500/10 text-violet-400 rounded"><Scroll size={24} /></div>
+            <div>
+              <h4 className="font-bold text-white uppercase tracking-widest text-sm">神卷試煉</h4>
+              <p className="text-[9px] text-violet-500/70 uppercase tracking-widest font-black">AI 衍化靈句 · 補全殘卷</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 text-[8px] font-black tracking-tighter uppercase border border-violet-500/30">Gemini 2.0</div>
+            <ChevronRight className="text-slate-700 mr-2" />
+          </div>
         </div>
       </div>
 
