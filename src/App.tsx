@@ -93,19 +93,30 @@ export default function App() {
   }, [user]);
 
   const persistGlobal = async (changes: { words?: Word[]; batches?: Batch[]; settings?: AppSettings }) => {
-    // Update local state immediately for snappy UI
-    if (changes.words) setWords([...changes.words]);
-    if (changes.batches) setBatches([...changes.batches]);
-    if (changes.settings) setSettings({...changes.settings});
-
-    // Sync to Firestore
+    // Sync to Firestore FIRST to ensure authority
     try {
       const configRef = doc(db, 'global', 'config');
-      await setDoc(configRef, changes, { merge: true });
+      // Use consolidated state for the cloud
+      const nextWords = changes.words ?? words;
+      const nextBatches = changes.batches ?? batches;
+      const nextSettings = changes.settings ?? settings;
+      
+      await setDoc(configRef, {
+        words: nextWords,
+        batches: nextBatches,
+        settings: nextSettings
+      });
+      
+      // Only update local state AFTER successful cloud write to ensure consistency
+      if (changes.words) setWords([...changes.words]);
+      if (changes.batches) setBatches([...changes.batches]);
+      if (changes.settings) setSettings({...changes.settings});
+      
     } catch (err) {
       console.error("Failed to persist global decree:", err);
       const { handleFirestoreError, OperationType } = await import('./lib/firebase');
       handleFirestoreError(err, OperationType.WRITE, 'global/config');
+      throw err; // Re-throw to let components handle local error states
     }
   };
 
