@@ -26,7 +26,6 @@ export interface AppSettings {
 
 export interface UserStats {
   rounds: number;
-  spirit: number;
   lastDate: string;
   wordStats?: Record<string, number>;
   wordHistory?: Record<string, { c: number; w: number }>; // c: correct, w: wrong
@@ -37,12 +36,26 @@ export interface User {
   name: string;
   pw: string;
   avatar: string;
-  avatarSize?: number; // Size in px
-  avatarX?: number; // Offset X
-  avatarY?: number; // Offset Y
-  exp: number;
-  ancientExp?: number;
-  rotations?: number; // 轉數 (涅槃重修次數)
+  avatarSize?: number; 
+  avatarX?: number; 
+  avatarY?: number; 
+  totalExp: number; // 永久累積的分身修為
+  totalAncientExp: number; // 永久累積的本尊神識
+  jing: number; // 當前精 (Meat body/Stamina)
+  qi: number; // 當前氣 (Spiritual/Stamina)
+  shen: number; // 當前神 (Mental/Stamina)
+  maxJing: number;
+  maxQi: number;
+  maxShen: number;
+  lastRefresh?: number; // 最後一次恢復計算的時間戳
+  realm?: string;
+  items?: {
+    bloodPill: number; // 氣血丹
+    qiPill: number; // 聚靈丹
+    spiritPill: number; // 養神丹
+    spiritJade: number; // 仙玉
+  };
+  rotations?: number; 
   isMaster?: boolean;
   recoveryPw?: string;
   stats: UserStats;

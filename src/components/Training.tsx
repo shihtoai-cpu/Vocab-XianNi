@@ -17,87 +17,85 @@ interface TrainingProps {
 
 export default function Training({ user, words, onUpdate, setView }: TrainingProps) {
   const [cur, setCur] = useState<Word | null>(null);
+  const [overlay, setOverlay] = useState<{ msg: string; type: 'fail' } | null>(null);
   
   useEffect(() => {
+    if (user.qi < 1) {
+      setOverlay({ msg: "靈氣枯竭，天逆空間法陣崩解！請服用聚靈丹或閉關。", type: 'fail' });
+      setTimeout(() => setView('lobby'), 3000);
+      return;
+    }
     if (words.length > 0) next();
   }, [words]);
 
   const next = () => {
+    if (user.qi < 1) {
+       setView('lobby'); // Auto exit if out of Qi
+       return;
+    }
     setCur(words[Math.floor(Math.random() * words.length)]);
   };
 
-  if (!cur) return (
-    <div className="p-10 text-center flex flex-col items-center justify-center h-screen space-y-4 bg-slate-950">
-      <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-slate-500 font-bold">正在感應天逆空間...</p>
-      {words.length === 0 && (
-        <div className="space-y-4 pt-4">
-          <p className="text-amber-500 text-xs">仙冊空虛，無經書可練</p>
-          <button onClick={() => setView('lobby')} className="px-8 py-3 glass rounded-xl text-indigo-400 font-bold uppercase tracking-widest border border-indigo-500/20 active:scale-95 transition-all">
-            暫歸洞府
-          </button>
+  if (!cur || overlay) return (
+    <div className="flex-1 flex flex-col items-center justify-center space-y-4">
+      {overlay ? (
+        <div className="p-8 rounded-3xl border border-red-500/50 bg-red-950/40 text-red-500 text-center space-y-4 max-w-sm animate-in fade-in">
+          <h3 className="text-xl font-black uppercase tracking-widest">靈氣枯竭</h3>
+          <p className="text-sm font-bold leading-relaxed">{overlay.msg}</p>
         </div>
+      ) : (
+        <>
+          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">感應天逆空間...</p>
+        </>
       )}
     </div>
   );
 
   return (
-    <div className="p-6 h-screen flex flex-col overflow-hidden bg-slate-950">
-      <header className="mt-12 mb-8 px-2 flex justify-between items-start">
-        <div className="flex flex-col gap-4">
-          <button 
-            onClick={() => { onUpdate(user); setView('lobby'); }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-95 group border border-white/5 shadow-xl"
-          >
-            <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="text-[10px] font-black tracking-widest uppercase">封印修為並遁走</span>
-          </button>
-          
-          <div className="flex flex-col pl-2">
-            <span className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em]">天逆空間</span>
-            <span className="text-[9px] text-slate-600 font-mono tracking-tighter">累修題數：{user.stats.spirit}</span>
-          </div>
+    <div className="flex-1 flex flex-col overflow-hidden relative">
+      <header className="px-4 py-3 flex items-center justify-between">
+        <div className="flex flex-col">
+          <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest">天逆空間</span>
+          <span className="text-xs font-mono font-bold text-slate-300">神：{user.shen}</span>
         </div>
       </header>
-      <FlipEngine 
-        word={cur.en} 
-        zh={cur.zh} 
-        pos={cur.pos}
-        onResult={(ok, pts) => {
-          const wordKey = cur.en;
-          const currentWordStats = user.stats.wordStats || {};
-          const oldScore = currentWordStats[wordKey] || 0;
-          
-          let newWordScore = ok ? oldScore + pts : Math.floor(oldScore * 0.5);
-          newWordScore = Math.max(0, Math.min(100, newWordScore));
+      <div className="flex-1 flex flex-col overflow-hidden px-4 pb-4">
+        <FlipEngine 
+          word={cur.en} 
+          zh={cur.zh} 
+          pos={cur.pos}
+          onResult={(ok, pts) => {
+            const wordKey = cur.en;
+            const currentWordStats = user.stats.wordStats || {};
+            const oldScore = currentWordStats[wordKey] || 0;
+            
+            let newWordScore = ok ? oldScore + pts : Math.floor(oldScore * 0.5);
+            newWordScore = Math.max(0, Math.min(100, newWordScore));
 
-          const currentHistory = user.stats.wordHistory || {};
-          const prevH = currentHistory[wordKey] || { c: 0, w: 0 };
-          const updatedHistory = {
-            ...currentHistory,
-            [wordKey]: {
-              c: prevH.c + (ok ? 1 : 0),
-              w: prevH.w + (ok ? 0 : 1)
-            }
-          };
+            const currentHistory = user.stats.wordHistory || {};
+            const prevH = currentHistory[wordKey] || { c: 0, w: 0 };
+            const updatedHistory = {
+              ...currentHistory,
+              [wordKey]: { c: prevH.c + (ok ? 1 : 0), w: prevH.w + (ok ? 0 : 1) }
+            };
 
-          const updated = {
-            ...user,
-            stats: {
-              ...user.stats,
-              spirit: user.stats.spirit + (ok ? 1 : 0),
-              wordStats: {
-                ...currentWordStats,
-                [wordKey]: newWordScore
-              },
-              wordHistory: updatedHistory
-            }
-          };
-          onUpdate(updated);
-          next();
-        }}
-        onBack={() => { onUpdate(user); setView('lobby'); }} 
-      />
+            const updated = {
+              ...user,
+              qi: Math.max(0, user.qi - 1), // 每答一題消耗 1 點靈氣
+              totalAncientExp: user.totalAncientExp + (ok ? 1 : 0), // 永久累積神識
+              stats: {
+                ...user.stats,
+                wordStats: { ...currentWordStats, [wordKey]: newWordScore },
+                wordHistory: updatedHistory
+              }
+            };
+            onUpdate(updated);
+            next();
+          }}
+          onBack={() => { onUpdate(user); setView('lobby'); }} 
+        />
+      </div>
     </div>
   );
 }

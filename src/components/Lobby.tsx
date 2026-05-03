@@ -7,7 +7,9 @@ import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { User, AppSettings, Word } from '../types';
 import { getRealmInfo, getAncientRealm, getMasteredPrefix, ANCIENT_REALMS } from '../constants';
-import { ShieldCheck, Camera, Sword, RotateCcw, Zap, ChevronRight, LogOut, Sparkles, Move, Maximize, X, Check, Scroll } from 'lucide-react';
+import { ShieldCheck, Camera, Sword, RotateCcw, Zap, ChevronRight, LogOut, Sparkles, Move, Maximize, X, Check, Scroll, Wind, Brain } from 'lucide-react';
+
+import { auth } from '../lib/firebase';
 
 interface LobbyProps {
   user: User;
@@ -19,6 +21,7 @@ interface LobbyProps {
 }
 
 export default function Lobby({ user, settings, words, setView, onLogout, onUpdate }: LobbyProps) {
+  const isSyncing = auth.currentUser !== null;
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
   const [modal, setModal] = useState<{ type: 'confirm' | 'alert'; msg: string; onConfirm?: () => void } | null>(null);
   const [tempAvatar, setTempAvatar] = useState(user.avatar);
@@ -27,9 +30,9 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
   const [tempY, setTempY] = useState(user.avatarY || 0);
 
   const masteredCount = Object.values(user.stats.wordStats || {}).filter(score => score >= 50).length;
-  const info = getRealmInfo(user.exp);
-  const prog = ((user.exp - info.current) / (info.next - info.current)) * 100;
-  const ancient = getAncientRealm(user.ancientExp || 0, masteredCount);
+  const info = getRealmInfo(user.totalExp || 0);
+  const prog = (((user.totalExp || 0) - info.current) / (info.next - info.current)) * 100;
+  const ancient = getAncientRealm(user.totalAncientExp || 0, masteredCount);
   const prefix = getMasteredPrefix(masteredCount);
 
   const canRebirth = ancient.n === "九星古神";
@@ -41,8 +44,11 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
       onConfirm: () => {
         onUpdate({
           ...user,
-          exp: 0,
-          ancientExp: 0,
+          jing: user.maxJing,
+          qi: user.maxQi,
+          shen: user.maxShen,
+          totalExp: 0,
+          totalAncientExp: 0,
           rotations: (user.rotations || 0) + 1
         });
       }
@@ -68,13 +74,33 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
         stats: {
           ...user.stats,
           rounds: 0,
-          spirit: 0,
           lastDate: today
         }
       };
       onUpdate(updated);
     }
   }, []);
+
+  const useItem = (type: 'bloodPill' | 'qiPill' | 'spiritPill' | 'spiritJade') => {
+    if (!user.items || user.items[type] <= 0) return;
+
+    const updatedUser = { ...user, items: { ...user.items } };
+    updatedUser.items![type]--;
+
+    if (type === 'bloodPill') {
+      updatedUser.jing = Math.min(user.maxJing, user.jing + 10);
+    } else if (type === 'qiPill') {
+      updatedUser.qi = Math.min(user.maxQi, user.qi + 10);
+    } else if (type === 'spiritPill') {
+      updatedUser.shen = Math.min(user.maxShen, user.shen + 10);
+    } else if (type === 'spiritJade') {
+      updatedUser.jing = user.maxJing;
+      updatedUser.qi = user.maxQi;
+      updatedUser.shen = user.maxShen;
+    }
+
+    onUpdate(updatedUser);
+  };
 
   return (
     <div className="p-6 flex flex-col h-screen space-y-6 pb-24 overflow-y-auto scrollbar-hide relative">
@@ -288,17 +314,54 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
         </button>
       </header>
 
+      {/* 同步狀態提示 */}
+      {!isSyncing && (
+        <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-2xl flex items-center justify-between animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-500">
+              <LogOut size={16} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">山門封鎖 (離線模式)</p>
+              <p className="text-[9px] text-rose-500/60 font-bold">目前以臨時密碼登入，修為無法同步至雲端。</p>
+            </div>
+          </div>
+          <button onClick={onLogout} className="text-[9px] bg-rose-500 text-white px-2 py-1 rounded font-black">正路登錄</button>
+        </div>
+      )}
+
+      {/* 丹藥資源 */}
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { id: 'bloodPill', name: '氣血丹', icon: <Zap size={14} className="text-amber-400" />, count: user.items?.bloodPill || 0, color: 'border-amber-500/20' },
+          { id: 'qiPill', name: '聚靈丹', icon: <Wind size={14} className="text-cyan-400" />, count: user.items?.qiPill || 0, color: 'border-cyan-500/20' },
+          { id: 'spiritPill', name: '養神丹', icon: <Brain size={14} className="text-purple-400" />, count: user.items?.spiritPill || 0, color: 'border-purple-500/20' },
+          { id: 'spiritJade', name: '仙玉', icon: <Sparkles size={14} className="text-indigo-400" />, count: user.items?.spiritJade || 0, color: 'border-indigo-500/30' },
+        ].map(item => (
+          <button 
+            key={item.id}
+            onClick={() => useItem(item.id as any)}
+            disabled={item.count <= 0}
+            className={`p-3 glass rounded-2xl border flex flex-col items-center gap-1 transition-all active:scale-95 ${item.color} ${item.count <= 0 ? 'opacity-20' : 'hover:bg-white/5'}`}
+          >
+            {item.icon}
+            <span className="text-[8px] font-black text-slate-400">{item.name}</span>
+            <span className="text-xs font-mono font-bold text-white">{item.count}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="glass p-7 rounded-3xl space-y-8 shadow-xl border border-white/5">
         {/* 分身進度 */}
         <div className="space-y-4">
           <div className="flex justify-between items-end text-[10px] font-black tracking-widest text-emerald-500/80 uppercase">
             <span>分身修行 ・ {info.s}</span>
-            <span>{user.exp.toLocaleString()} / {info.next.toLocaleString()}</span>
+            <span>{(user.totalExp || 0).toLocaleString()} / {info.next.toLocaleString()}</span>
           </div>
           <div className="bar-container h-2 bg-slate-950/50">
             <div className="bar-fill bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.4)]" style={{ width: `${Math.min(100, prog)}%` }}></div>
           </div>
-          <p className="text-[9px] text-right text-slate-600 font-bold tracking-tighter">突破尚需 {info.next - user.exp} 靈氣提升</p>
+          <p className="text-[9px] text-right text-slate-600 font-bold tracking-tighter">突破尚需 {info.next - (user.totalExp || 0)} 靈氣提升</p>
         </div>
 
         {/* 本尊進度 */}
@@ -312,9 +375,9 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
               const nextAncient = ANCIENT_REALMS[ancientIdx + 1];
               if (!nextAncient) return null;
               
-              const ptsReached = (user.ancientExp || 0) >= nextAncient.pts;
+              const ptsReached = (user.totalAncientExp || 0) >= nextAncient.pts;
               const masteredReached = masteredCount >= nextAncient.masteredReq;
-              const ptsProg = Math.min(100, ((user.ancientExp || 0) / nextAncient.pts) * 100);
+              const ptsProg = Math.min(100, ((user.totalAncientExp || 0) / nextAncient.pts) * 100);
               const masterProg = Math.min(100, (masteredCount / (nextAncient.masteredReq || 1)) * 100);
 
               return (
@@ -327,14 +390,14 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
                       </span>
                       <div className="flex flex-col items-end">
                         <span className="text-[8px] text-slate-500">目前 / 目標</span>
-                        <span className="text-slate-400">{user.ancientExp || 0} / {nextAncient.pts.toLocaleString()}</span>
+                        <span className="text-slate-400">{user.totalAncientExp || 0} / {nextAncient.pts.toLocaleString()}</span>
                       </div>
                     </div>
                     <div className="bar-container h-2 bg-slate-900 border border-white/5">
                       <div className={`bar-fill transition-all duration-1000 ${ptsReached ? 'bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.6)]' : 'bg-slate-700'}`} style={{ width: `${ptsProg}%` }}></div>
                     </div>
                     <p className={`text-[9px] text-right font-black tracking-tighter ${ptsReached ? 'text-emerald-500/60' : 'text-rose-500/60'}`}>
-                      {ptsReached ? '【神識契合已達標】' : `距離晉升門檻還差 ${Math.max(0, nextAncient.pts - (user.ancientExp || 0))} 點神識`}
+                      {ptsReached ? '【神識契合已達標】' : `距離晉升門檻還差 ${Math.max(0, nextAncient.pts - (user.totalAncientExp || 0))} 點神識`}
                     </p>
                   </div>
 
@@ -372,8 +435,8 @@ export default function Lobby({ user, settings, words, setView, onLogout, onUpda
           <p className="text-3xl font-black text-white font-mono">{user.stats.rounds} / {settings.rounds}</p>
         </div>
         <div className="glass p-5 rounded text-center border-b-2 border-slate-700">
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">仙凡悟理</p>
-          <p className="text-3xl font-black text-indigo-400 font-mono">{user.stats.spirit} 卷</p>
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">修為累積 (神識)</p>
+          <p className="text-3xl font-black text-indigo-400 font-mono">{(user.totalAncientExp || 0).toLocaleString()}</p>
         </div>
       </div>
 

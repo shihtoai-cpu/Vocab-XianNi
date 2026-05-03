@@ -57,11 +57,24 @@ export default function Register({ onBack, onDone, users }: RegisterProps) {
       name: trimmedName, 
         pw: '', // Not used with Google Auth
         avatar: a, 
-        exp: 0, 
-        ancientExp: 0,
+        jing: 20, 
+        qi: 20, 
+        shen: 20,
+        maxJing: 20,
+        maxQi: 20,
+        maxShen: 20,
+        totalExp: 0,
+        totalAncientExp: 0,
+        lastRefresh: Date.now(),
+        realm: '凝氣期',
+        items: {
+          bloodPill: 0,
+          qiPill: 0,
+          spiritPill: 0,
+          spiritJade: 0
+        },
         stats: { 
           rounds: 0, 
-          spirit: 100, 
           lastDate: new Date().toISOString().split('T')[0],
           wordStats: {},
           wordHistory: {}

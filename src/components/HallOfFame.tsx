@@ -12,7 +12,9 @@ interface HallOfFameProps {
 }
 
 export default function HallOfFame({ users }: HallOfFameProps) {
-  const sorted = [...users].sort((a, b) => (b.exp + (b.ancientExp || 0)) - (a.exp + (a.ancientExp || 0)));
+  const sorted = [...users].sort((a, b) => 
+    ((b.totalExp || 0) + (b.totalAncientExp || 0)) - ((a.totalExp || 0) + (a.totalAncientExp || 0))
+  );
   
   return (
     <div className="p-6 space-y-6 overflow-y-auto pb-32 h-screen scrollbar-hide">
@@ -22,9 +24,9 @@ export default function HallOfFame({ users }: HallOfFameProps) {
       </div>
       <div className="space-y-4">
         {sorted.map((u, i) => {
-          const tao = getRealmInfo(u.exp);
+          const tao = getRealmInfo(u.totalExp || 0);
           const masteredCount = Object.values(u.stats.wordStats || {}).filter(score => score >= 50).length;
-          const ancient = getAncientRealm(u.ancientExp || 0, masteredCount);
+          const ancient = getAncientRealm(u.totalAncientExp || 0, masteredCount);
           const prefix = getMasteredPrefix(masteredCount);
 
           return (
@@ -64,7 +66,7 @@ export default function HallOfFame({ users }: HallOfFameProps) {
               </div>
               <div className="text-right z-10">
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">總修為</p>
-                <p className="text-sm font-mono font-bold text-white">{(u.exp + (u.ancientExp || 0)).toLocaleString()}</p>
+                <p className="text-sm font-mono font-bold text-white">{((u.totalExp || 0) + (u.totalAncientExp || 0)).toLocaleString()}</p>
               </div>
             </div>
           );

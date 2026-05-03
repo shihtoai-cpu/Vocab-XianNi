@@ -3,8 +3,8 @@
   "short_name": "天逆珠",
   "description": "一念成仙，二念入魔。沈浸式仙俠英語學習系統。",
   "scope": "/",
-  "id": "/index.html",
   "start_url": "/index.html",
+  "id": "xianni-vocab-app",
   "display": "standalone",
   "background_color": "#020617",
   "theme_color": "#020617",
@@ -25,7 +25,20 @@
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3655/3655682.png",
       "sizes": "144x144",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "開始修煉",
+      "url": "/?view=train",
+      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/3655/3655682.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "查看排行榜",
+      "url": "/?tab=hall",
+      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/3655/3655682.png", "sizes": "192x192" }]
     }
   ]
 }

@@ -108,28 +108,41 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
 
   const handleAuth = async () => {
     if (pw === localSettings.adminPw) {
-      // 1. 先開啟本地主宰權限
+      // 1. 先開啟本地主宰權限 (不論雲端標記是否成功，密碼對了就能進 UI)
       setAuth(true);
       
-      // 2. 強制在雲端修士存檔中刻印主宰標記
+      // 2. 嘗試在雲端修士存檔中刻印主宰標記 (僅當有正式 Auth 登入時)
       if (curUser && curUser.id) {
         try {
-          const { updateDoc, doc, getDoc } = await import('firebase/firestore');
+          const { setDoc, doc, getDoc } = await import('firebase/firestore');
+          const { auth: firebaseAuth } = await import('../lib/firebase');
+          
+          const is正式登入 = firebaseAuth.currentUser !== null;
+          
+          if (!is正式登入) {
+            console.log("主宰印記跳過：目前為臨時登入（無 Auth 憑證），無法刻印雲端標記。");
+            return;
+          }
+
           const userRef = doc(db, 'users', curUser.id);
-          
           console.log("正在刻印主宰印記，目標 UID:", curUser.id);
-          await updateDoc(userRef, { isMaster: true });
+          // 使用 setDoc + merge: true，確保文檔不存在時也能建立
+          await setDoc(userRef, { isMaster: true }, { merge: true });
           
-          // 重新抓取一次確認
           const snap = await getDoc(userRef);
           if (snap.exists() && snap.data().isMaster === true) {
             console.log("主宰印記刻印成功！天道已認證您的權限。");
             setCurUser({ ...curUser, isMaster: true });
-            showAlert("權限解開", "主宰印記已成功刻印，您現在具備全域修改權限。");
+            showAlert("權限解開", "主宰印記已成功刻印至雲端，您現在具備永久修士管理權限。");
           }
-        } catch (err) {
-          console.error("主宰印記刻印失敗 (可能是權限不足):", err);
-          showAlert("權限受阻", "無法在大道中留下主宰印記。請確認您的網路連線，或嘗試重新整理頁面再試。");
+        } catch (err: any) {
+          console.error("主宰印記刻印失敗:", err);
+          // 這裡改為較溫和的提示，不阻擋用戶進入後台
+          if (err.message?.includes("permission")) {
+            showAlert("同步受限", "密碼正確，但雲端法則拒絕了『主宰印記』的刻印。這通常是因為您未登錄 Google 帳號，或 Security Rules 未配置。");
+          } else {
+            showAlert("天道阻礙", "刻印主宰標記時發生未知錯誤，但您仍可本地操作。");
+          }
         }
       }
     } else {
@@ -206,6 +219,44 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
           <div className="flex justify-between items-center"><span>挑戰輪次: {localSettings.rounds}</span><input type="range" min="3" max="10" value={localSettings.rounds} onChange={e => setLocalSettings({...localSettings, rounds: parseInt(e.target.value)})} className="w-24 accent-indigo-500" /></div>
           <div className="flex justify-between items-center"><span>每輪題數: {localSettings.questions}</span><input type="range" min="5" max="20" value={localSettings.questions} onChange={e => setLocalSettings({...localSettings, questions: parseInt(e.target.value)})} className="w-24 accent-indigo-500" /></div>
           <div className="flex justify-between items-center"><span>復活容錯: {localSettings.errors}</span><input type="range" min="0" max="10" value={localSettings.errors} onChange={e => setLocalSettings({...localSettings, errors: parseInt(e.target.value)})} className="w-24 accent-indigo-500" /></div>
+          <div className="pt-2 border-t border-slate-800 space-y-2">
+            <span className="text-slate-600 uppercase font-bold text-[9px] tracking-widest">大道维护:</span>
+            <button 
+              onClick={() => {
+                showConfirm("修正大道", "將遍歷所有修士記錄，修正超標體力（如 1395 氣）並遷移舊版修為數據。是否繼續？", async () => {
+                  setSaving(true);
+                  try {
+                    const { calculateRecovery } = await import('../lib/stamina');
+                    let count = 0;
+                    for (const u of localUsers) {
+                      if (!u.id) continue;
+                      const repaired = calculateRecovery(u);
+                      // Only write if there's actually a correction or migration needed
+                      const needsRepair = JSON.stringify(repaired) !== JSON.stringify(u);
+                      if (needsRepair) {
+                        await updateDoc(doc(db, 'users', u.id), repaired as any);
+                        count++;
+                      }
+                    }
+                    showAlert("法旨達成", `大道已歸位，已修正 ${count} 位修士的數據（含 1395 氣之異變）。`);
+                  } catch (err: any) {
+                    console.error(err);
+                    const msg = err.message || "";
+                    if (msg.includes("permission")) {
+                      showAlert("權限受阻", "雲端拒絕了修復請求。請確保您已使用主宰帳號 (shihto.ai@gmail.com) 登錄，且雲端 Security Rules 已更新。");
+                    } else {
+                      showAlert("天道阻礙", `修復過程中斷: ${msg}`);
+                    }
+                  } finally {
+                    setSaving(false);
+                  }
+                });
+              }}
+              className="w-full py-2 bg-indigo-900/30 text-indigo-400 border border-indigo-500/30 rounded text-[10px] font-black uppercase hover:bg-indigo-500 hover:text-white transition-all"
+            >
+              一鍵修復所有修士數據 (修正 1395 氣)
+            </button>
+          </div>
           <div className="pt-2 border-t border-slate-800">
             <span className="text-slate-600 uppercase font-bold text-[9px] tracking-widest">修改主宰密碼:</span>
             <input type="text" className="w-full bg-slate-950 border border-slate-800 rounded mt-1 p-2 text-center text-indigo-400 font-bold font-mono" value={localSettings.adminPw} onChange={e => setLocalSettings({...localSettings, adminPw: e.target.value})} />
@@ -276,24 +327,55 @@ export default function Admin({ settings: initialSettings, words: initialWords, 
                       更名
                     </button>
                   </div>
-                  <p className="text-[9px] text-slate-500 font-mono">修為: {u.exp}</p>
+                  <p className="text-[9px] text-slate-500 font-mono">精/氣/神: {u.jing}/{u.qi}/{u.shen}</p>
+                  <p className="text-[9px] text-slate-500 font-mono">累修: {u.totalExp || 0} / {u.totalAncientExp || 0}</p>
                   {u.recoveryPw && <p className="text-[9px] text-emerald-500 font-bold">主宰重設密碼: {u.recoveryPw}</p>}
                 </div>
               </div>
               
               <div className="grid grid-cols-3 gap-2 mt-4">
                 <button onClick={() => {
-                  showPrompt("修為調整", `請輸入修士 ${u.name} 的新修為點數：`, u.exp.toString(), async (e) => {
+                  showConfirm("體力全滿", `確定要將修士 ${u.name} 的精氣神恢復至圓滿？`, async () => {
+                    if (u.id) {
+                      const updates = {
+                        jing: u.maxJing || 20,
+                        qi: u.maxQi || 20,
+                        shen: u.maxShen || 20,
+                        lastRefresh: Date.now()
+                      };
+                      await updateDoc(doc(db, 'users', u.id), updates);
+                      showAlert("法旨達成", "修士狀態已回歸圓滿。");
+                    }
+                  });
+                }} className="text-[9px] bg-indigo-950/20 text-indigo-400 p-2 rounded border border-indigo-900/30 font-bold uppercase">恢復狀態</button>
+
+                <button onClick={() => {
+                  showConfirm("賞賜丹藥", `賞賜修士 ${u.name} 各種丹藥與仙玉？`, async () => {
+                    if (u.id) {
+                      const items = {
+                        bloodPill: (u.items?.bloodPill || 0) + 10,
+                        qiPill: (u.items?.qiPill || 0) + 10,
+                        spiritPill: (u.items?.spiritPill || 0) + 10,
+                        spiritJade: (u.items?.spiritJade || 0) + 1,
+                      };
+                      await updateDoc(doc(db, 'users', u.id), { items });
+                      showAlert("法旨達成", "賞賜已發放。");
+                    }
+                  });
+                }} className="text-[9px] bg-amber-950/20 text-amber-500 p-2 rounded border border-amber-900/30 font-bold uppercase">賞賜丹藥</button>
+
+                <button onClick={() => {
+                  showPrompt("修為調整", `請輸入修士 ${u.name} 的新修為點數：`, (u.totalExp || 0).toString(), async (e) => {
                     if (e !== "" && u.id) {
-                      const newExp = parseInt(e);
-                      if (isNaN(newExp)) return showAlert("法力偏差", "輸入之數非靈氣之量（請輸入數字）");
-                      await updateDoc(doc(db, 'users', u.id), { exp: newExp });
-                      const newList = localUsers.map(x => x.id === u.id ? {...x, exp: newExp} : x);
+                      const nextVal = parseInt(e);
+                      if (isNaN(nextVal)) return showAlert("法力偏差", "輸入之數非靈氣之量（請輸入數字）");
+                      await updateDoc(doc(db, 'users', u.id), { totalExp: nextVal });
+                      const newList = localUsers.map(x => x.id === u.id ? {...x, totalExp: nextVal} : x);
                       setLocalUsers(newList);
                       persistUsers(newList);
                       // Snappy update if editing self
                       if (curUser && curUser.id === u.id) {
-                        setCurUser({...curUser, exp: newExp});
+                        setCurUser({...curUser, totalExp: nextVal});
                       }
                     }
                   });

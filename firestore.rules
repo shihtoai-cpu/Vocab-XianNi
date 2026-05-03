@@ -1,30 +1,51 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 預設拒絕
+    // 預設拒絕所有存取
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // 修士存檔：公開讀取以利門戶展示，本人或主宰可寫
-    match /users/{userId} {
-      allow read: if true;
-      allow write: if request.auth.uid == userId || 
-        (request.auth != null && (
-          request.auth.token.email == "shihto.ai@gmail.com" || 
-          request.auth.uid == "DqXGrDEHqxVXc9rXI77pWAndCbl2" ||
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isMaster == true
-        ));
-    }
-
-    // 全域配置：公開讀取，僅主宰可寫
-    match /global/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null && (
+    // 全域輔助函數
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    
+    // 加強版管理員判定
+    function isAdmin() { 
+      return isSignedIn() && (
         request.auth.token.email == "shihto.ai@gmail.com" || 
         request.auth.uid == "DqXGrDEHqxVXc9rXI77pWAndCbl2" ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isMaster == true
+        // 檢查該用戶文檔是否存在且具備 isMaster 標記
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isMaster', false) == true)
       );
+    }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // 修士存檔：公開讀取以利門戶展示，本人或管理員可寫
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if (isOwner(userId) || isAdmin()) && isValidUser(incoming());
+      allow update: if (isOwner(userId) || isAdmin()) && isValidUser(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // 用戶數據驗證 (僅在欄位存在時驗證，以支援部分更新)
+    function isValidUser(u) {
+      return (!u.keys().contains('name') || (u.name is string && u.name.size() > 0 && u.name.size() <= 50)) &&
+             (!u.keys().contains('stats') || u.stats is map) &&
+             (!u.keys().contains('jing') || u.jing is number) &&
+             (!u.keys().contains('maxJing') || u.maxJing is number) &&
+             (!u.keys().contains('totalExp') || u.totalExp is number) &&
+             (!u.keys().contains('isMaster') || u.isMaster is bool);
+    }
+
+    // 全域配置：公開讀取，僅管理員可撰寫
+    match /global/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

@@ -10,21 +10,39 @@
         "avatarSize": { "type": "number" },
         "avatarX": { "type": "number" },
         "avatarY": { "type": "number" },
-        "exp": { "type": "number" },
-        "ancientExp": { "type": "number" },
+        "totalExp": { "type": "number" },
+        "totalAncientExp": { "type": "number" },
+        "jing": { "type": "number" },
+        "qi": { "type": "number" },
+        "shen": { "type": "number" },
+        "maxJing": { "type": "number" },
+        "maxQi": { "type": "number" },
+        "maxShen": { "type": "number" },
+        "lastRefresh": { "type": "number" },
+        "realm": { "type": "string" },
         "rotations": { "type": "number" },
+        "isMaster": { "type": "boolean" },
+        "recoveryPw": { "type": "string" },
+        "items": {
+          "type": "object",
+          "properties": {
+            "bloodPill": { "type": "number" },
+            "qiPill": { "type": "number" },
+            "spiritPill": { "type": "number" },
+            "spiritJade": { "type": "number" }
+          }
+        },
         "stats": {
           "type": "object",
           "properties": {
             "rounds": { "type": "number" },
-            "spirit": { "type": "number" },
             "lastDate": { "type": "string" },
+            "wordStats": { "type": "object" },
             "wordHistory": { "type": "object" }
           }
-        },
-        "uid": { "type": "string" }
+        }
       },
-      "required": ["name", "exp", "stats"]
+      "required": ["name", "stats"]
     },
     "GlobalConfig": {
       "title": "App Configuration",

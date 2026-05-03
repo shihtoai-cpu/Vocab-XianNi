@@ -55,44 +55,44 @@ export default function FlipEngine({ word, zh, pos, onResult, onBack }: FlipEngi
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center space-y-10 w-full p-4">
+    <div className="flex-1 flex flex-col items-center justify-center space-y-4 w-full p-2 overflow-hidden">
       {grade ? (
-        <div className="text-center animate-in zoom-in duration-300 w-full flex flex-col items-center justify-center space-y-8">
-          <h2 className="text-9xl font-black font-mono text-white tracking-tighter">{grade.label}</h2>
-          <p className={`text-lg font-black uppercase tracking-widest ${grade.color}`}>
+        <div className="text-center animate-in zoom-in duration-300 w-full flex flex-col items-center justify-center space-y-4">
+          <h2 className="text-8xl font-black font-mono text-white tracking-tighter leading-none">{grade.label}</h2>
+          <p className={`text-md font-black uppercase tracking-widest ${grade.color}`}>
             {grade.pts > 0 ? `修為 +${grade.pts} PT` : `受挫 ${grade.pts} PT`}
           </p>
-          <button onClick={handleNext} className="btn-gold px-12 py-4 text-xl flex items-center space-x-2">
+          <button onClick={handleNext} className="btn-gold px-8 py-3 text-lg flex items-center space-x-2">
             <span className="tracking-tighter">感悟下一題</span>
             <ChevronRight />
           </button>
         </div>
       ) : (
-        <div className="w-full max-w-sm space-y-8">
+        <div className="w-full max-w-sm flex flex-col items-center flex-1 justify-center">
           <div 
             onClick={handleFlip} 
-            className={`glass rounded p-12 flex flex-col items-center justify-center min-h-[350px] transition-all duration-300 cursor-pointer ${isFlipped ? 'border-indigo-500/50' : 'hover:scale-[1.02] border-slate-800'}`}
+            className={`glass rounded-2xl p-6 flex flex-col items-center justify-center w-full min-h-[280px] flex-1 max-h-[400px] transition-all duration-300 cursor-pointer ${isFlipped ? 'border-indigo-500/50' : 'hover:scale-[1.01] border-slate-800'}`}
           >
             {!isFlipped ? (
-              <div className="text-center animate-in fade-in">
-                <p className="text-slate-600 text-[10px] tracking-[0.4em] mb-6 uppercase font-bold">正在感應神理</p>
-                <h2 className="text-5xl font-black text-white tracking-tighter mb-4">{word}</h2>
-                <div className="w-12 h-1 bg-slate-800 mx-auto my-8"></div>
-                <p className="mt-4 text-indigo-500 animate-pulse text-[10px] font-bold uppercase tracking-widest">點擊參悟真意</p>
+              <div className="text-center animate-in fade-in flex flex-col items-center">
+                <p className="text-slate-600 text-[8px] tracking-[0.4em] mb-4 uppercase font-black">正在感應神理</p>
+                <h2 className="text-4xl xs:text-5xl font-black text-white tracking-tighter mb-2">{word}</h2>
+                <div className="w-10 h-0.5 bg-slate-800 my-4"></div>
+                <p className="mt-4 text-indigo-500 animate-pulse text-[9px] font-black uppercase tracking-widest">點擊參悟真意</p>
               </div>
             ) : (
-              <div className="w-full space-y-8 animate-in fade-in">
-                <div className="text-center">
-                  <h2 className="text-5xl font-black text-slate-500 mb-4 tracking-tighter opacity-50">{word}</h2>
-                  <div className="h-px bg-slate-800 w-full my-6"></div>
-                  <h3 className="text-3xl font-bold text-white mt-2">{zh}</h3>
-                  <div className="mt-4 inline-block px-3 py-1 bg-blue-600/30 border border-blue-500/40 rounded text-sm font-black text-blue-300 uppercase tracking-widest">
+              <div className="w-full space-y-6 animate-in fade-in flex flex-col items-center">
+                <div className="text-center w-full">
+                  <h2 className="text-3xl font-black text-slate-500 mb-2 tracking-tighter opacity-50">{word}</h2>
+                  <div className="h-px bg-slate-800 w-full my-4"></div>
+                  <h3 className="text-4xl font-bold text-white mt-1">{zh}</h3>
+                  <div className="mt-4 inline-block px-2 py-0.5 bg-blue-600/20 border border-blue-500/30 rounded text-[10px] font-black text-blue-300 uppercase tracking-widest">
                     {pos}
                   </div>
                 </div>
-                <div className="flex space-x-4 w-full">
-                  <button onClick={(e) => { e.stopPropagation(); evaluate(false); }} className="flex-1 py-5 rounded bg-red-950/20 border border-red-500/30 text-red-500 font-black text-xs uppercase tracking-widest">晦澀</button>
-                  <button onClick={(e) => { e.stopPropagation(); evaluate(true); }} className="flex-1 py-5 rounded bg-indigo-950/20 border border-indigo-500/30 text-indigo-400 font-black text-xs uppercase tracking-widest">通達</button>
+                <div className="flex space-x-3 w-full mt-auto">
+                  <button onClick={(e) => { e.stopPropagation(); evaluate(false); }} className="flex-1 py-4 rounded-xl bg-red-950/20 border border-red-500/20 text-red-500 font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all">晦澀</button>
+                  <button onClick={(e) => { e.stopPropagation(); evaluate(true); }} className="flex-1 py-4 rounded-xl bg-emerald-950/20 border border-emerald-500/20 text-emerald-400 font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all">通達</button>
                 </div>
               </div>
             )}
